@@ -4,13 +4,13 @@ from PIL import Image, ImageDraw
 def make(size, path):
     img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
     d = ImageDraw.Draw(img)
-    # fondo redondeado teal profundo
+    # fondo redondeado indigo profundo
     r = int(size * 0.22)
-    d.rounded_rectangle([0, 0, size - 1, size - 1], radius=r, fill=(11, 30, 39, 255))
+    d.rounded_rectangle([0, 0, size - 1, size - 1], radius=r, fill=(20, 18, 42, 255))
     cx = cy = size / 2
-    teal = (14, 124, 134, 255)
-    cyan = (45, 212, 217, 255)
-    white = (231, 240, 244, 255)
+    teal = (109, 94, 214, 255)     # indigo
+    cyan = (139, 124, 255, 255)    # violeta acento
+    white = (216, 209, 255, 255)   # lavanda claro
     # anillos concéntricos (diana = "norte")
     def ring(frac, color, w):
         rr = size * frac

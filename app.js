@@ -230,7 +230,7 @@ $("#fileImport").addEventListener("change",function(e){var f=e.target.files[0];i
 function toggleTheme(){var cur=document.documentElement.getAttribute("data-theme");var next=cur==="light"?"":"light";
   if(next)document.documentElement.setAttribute("data-theme",next);else document.documentElement.removeAttribute("data-theme");
   try{localStorage.setItem("gm_theme",next)}catch(e){}
-  document.querySelector('meta[name=theme-color]').setAttribute("content",next==="light"?"#eef2f4":"#0a0f16");
+  document.querySelector('meta[name=theme-color]').setAttribute("content",next==="light"?"#eef2f4":"#0f0e1a");
   if(state.tab==="progreso")makeCharts()}
 $("#btnTheme").addEventListener("click",toggleTheme);$("#btnThemeTop").addEventListener("click",toggleTheme);
 
