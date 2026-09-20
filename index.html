@@ -349,6 +349,17 @@
           </div>
           <p class="msg" id="syncMsg"></p>
         </div>
+        <div class="sect">Conectar con Obsidian</div>
+        <div class="card pad">
+          <p class="msg">Enlaza la app con tu vault: escribe una nota <b>“Gimnasio Mental — Progreso.md”</b> con tus KPIs, Camino a Top y registro, para que toda tu info viva también en Obsidian. Elige la carpeta del vault una vez; luego se actualiza sola. <i>(Conexión directa: Chrome/Edge de escritorio. En celular, usa “Descargar nota .md”.)</i></p>
+          <div class="stack" style="margin-top:12px">
+            <button class="btn" id="btnObsConnect">Conectar mi vault de Obsidian</button>
+            <button class="btn ghost" id="btnObsSave" hidden>Guardar en Obsidian ahora</button>
+            <label id="obsAutoWrap" hidden style="display:flex;align-items:center;gap:9px;font-size:13.5px;color:var(--muted);cursor:pointer"><input type="checkbox" id="obsAuto" style="width:18px;height:18px;accent-color:var(--accent)"> Guardar automáticamente al cambiar</label>
+            <button class="btn ghost" id="btnObsMd">Descargar nota .md (para arrastrar al vault)</button>
+          </div>
+          <p class="msg" id="obsMsg"></p>
+        </div>
         <div class="sect">Respaldo local</div>
         <div class="card pad stack">
           <button class="btn ghost" id="btnExport">Exportar mi progreso (JSON)</button>

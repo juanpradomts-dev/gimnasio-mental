@@ -202,7 +202,7 @@ function renderTop(){
   var next=null;for(var ci=0;ci<CATS.length&&!next;ci++){var arr=h.filter(function(x){return x.cat===CATS[ci]&&x.estado!=="hecho"});if(arr.length)next=arr[0]}
   var nc=$("#nextHito");if(nc)nc.innerHTML=next?'<span class="nextchip">▶ Próximo paso: '+next.titulo+'</span>':'<span class="nextchip done">✓ Todos los hitos logrados — a por el papeleo de admisión</span>'}
 function cycleHito(id){var x=state.metas.hitos.filter(function(y){return y.id===id})[0];if(!x)return;
-  x.estado=(ESTADOS[x.estado]||ESTADOS.pendiente).next;saveMetas();pushMetas();renderTop()}
+  x.estado=(ESTADOS[x.estado]||ESTADOS.pendiente).next;saveMetas();pushMetas();scheduleObsidian();renderTop()}
 
 /* ---------- render METAS ---------- */
 function renderMetas(){
@@ -240,10 +240,10 @@ document.addEventListener("click",function(e){
 });
 $("#dormir").addEventListener("change",sleepChange);$("#despertar").addEventListener("change",sleepChange);
 function sleepChange(){var o=state.days[state.activeDate]||(state.days[state.activeDate]={done:{},dormir:"",despertar:"",nota:""});o.dormir=$("#dormir").value;o.despertar=$("#despertar").value;touch(state.activeDate);renderSleep();ring();renderMiniKpis()}
-var gT;$("#goal").addEventListener("input",function(){state.metas.objetivoSemana=$("#goal").value;saveMetas();clearTimeout(gT);gT=setTimeout(pushMetas,600)});
+var gT;$("#goal").addEventListener("input",function(){state.metas.objetivoSemana=$("#goal").value;saveMetas();clearTimeout(gT);gT=setTimeout(pushMetas,600);scheduleObsidian()});
 ["mToefl","mToeflScore","mPct","mSleep","mRacha"].forEach(function(id){$("#"+id).addEventListener("change",function(){
   state.metas.toeflFecha=$("#mToefl").value;state.metas.toeflScore=+$("#mToeflScore").value||105;state.metas.metaPct=+$("#mPct").value||80;state.metas.metaSleep=+$("#mSleep").value||7.5;state.metas.metaRacha=+$("#mRacha").value||14;
-  saveMetas();pushMetas();renderMetas()})});
+  saveMetas();pushMetas();scheduleObsidian();renderMetas()})});
 
 /* ---------- respaldo / tema ---------- */
 $("#btnExport").addEventListener("click",function(){var blob=new Blob([JSON.stringify({days:state.days,metas:state.metas},null,2)],{type:"application/json"});var a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="gimnasio-mental-"+iso(new Date())+".json";a.click();setTimeout(function(){URL.revokeObjectURL(a.href)},1000)});
@@ -259,7 +259,7 @@ $("#btnTheme").addEventListener("click",toggleTheme);$("#btnThemeTop").addEventL
 /* ---------- Supabase sync ---------- */
 function status(cls,txt,sub){$("#sDot").className="dot"+(cls?" "+cls:"");$("#sTxt").textContent=txt;if(sub)$("#sSub").textContent=sub}
 function syncMsg(txt,cls){var el=$("#syncMsg");el.textContent=txt||"";el.className="msg"+(cls?" "+cls:"")}
-function touch(date){var o=state.days[date];if(o)o.u=new Date().toISOString();saveDays();pushDay(date)}
+function touch(date){var o=state.days[date];if(o)o.u=new Date().toISOString();saveDays();pushDay(date);scheduleObsidian()}
 function loadCfg(){try{return JSON.parse(localStorage.getItem("gm_cfg")||"null")}catch(e){return null}}
 function initSupabase(){var cfg=loadCfg();if(!cfg||!cfg.url||!cfg.key){status("","local","Datos en este dispositivo");return}
   if(typeof supabase==="undefined"){status("warn","sin librería");return}
@@ -282,9 +282,55 @@ function pullCloud(){if(!state.sb||!state.uid)return;
   state.sb.from("metas").select("*").eq("user_id",state.uid).maybeSingle().then(function(r){if(r&&r.data&&r.data.data){state.metas=Object.assign(state.metas,r.data.data);if(!state.metas.hitos)state.metas.hitos=HITOS_DEF.map(function(h){return Object.assign({},h)});saveMetas();render()}})}
 function subscribeCloud(){if(!state.sb||!state.uid)return;try{state.sb.channel("gm").on("postgres_changes",{event:"*",schema:"public",table:"dias",filter:"user_id=eq."+state.uid},function(p){var row=p.new;if(!row||!row.fecha)return;var loc=state.days[row.fecha];if(!loc||!loc.u||Date.parse(row.updated_at)>Date.parse(loc.u||0)){state.days[row.fecha]={done:row.done||{},dormir:row.dormir||"",despertar:row.despertar||"",nota:row.nota||"",u:row.updated_at};saveDays();render()}}).on("postgres_changes",{event:"*",schema:"public",table:"metas",filter:"user_id=eq."+state.uid},function(p){if(p.new&&p.new.data){state.metas=Object.assign(state.metas,p.new.data);saveMetas();render()}}).subscribe()}catch(e){}}
 
+/* ---------- Conexión a Obsidian (File System Access API) ---------- */
+function obsMsg(t,cls){var el=$("#obsMsg");if(el){el.textContent=t||"";el.className="msg"+(cls?" "+cls:"")}}
+function idbOpen(){return new Promise(function(res,rej){var r=indexedDB.open("gm-fs",1);r.onupgradeneeded=function(){r.result.createObjectStore("h")};r.onsuccess=function(){res(r.result)};r.onerror=function(){rej(r.error)}})}
+function idbSet(k,v){return idbOpen().then(function(db){return new Promise(function(res,rej){var t=db.transaction("h","readwrite");t.objectStore("h").put(v,k);t.oncomplete=function(){res()};t.onerror=function(){rej(t.error)}})})}
+function idbGet(k){return idbOpen().then(function(db){return new Promise(function(res){var t=db.transaction("h","readonly"),rq=t.objectStore("h").get(k);rq.onsuccess=function(){res(rq.result)};rq.onerror=function(){res(null)}})})}
+function verifyPerm(h,canPrompt){var o={mode:"readwrite"};return Promise.resolve().then(function(){return h.queryPermission(o)}).then(function(p){if(p==="granted")return true;if(canPrompt)return h.requestPermission(o).then(function(q){return q==="granted"});return false}).catch(function(){return false})}
+function estadoTxt(e){return e==="hecho"?"hecho":(e==="curso"?"en curso":"pendiente")}
+function genMarkdown(){var now=new Date(),f=function(v){return Math.round(v*100)+"%"};
+  var md="---\n"+'titulo: "Gimnasio Mental — Progreso"\n'+"tipo: dashboard\n"+"actualizado: "+now.toISOString()+"\n"+"tags: [progreso, habitos, tracker, camino-a-top]\n"+"---\n\n";
+  md+="# 🎯 Gimnasio Mental — Progreso\n\n";
+  md+="> [!info] Nota generada automáticamente por la app. Última actualización: "+now.toLocaleString()+". El origen editable es la app; esta nota es su reflejo en tu vault.\n\n";
+  md+="## 📊 Resumen\n";
+  md+="- **Hoy:** "+f(dayScore(iso(now)).pct)+" · **Semana:** "+f(weekRate())+" · **Últimos 30 días:** "+f(rangeRate(30))+"\n";
+  var as=avgSleep(7);md+="- **Racha actual:** "+globalStreak()+" días (mejor: "+bestGlobalStreak()+") · **Sueño 7d:** "+(as!=null?as.toFixed(1)+"h":"—")+"\n";
+  md+="- **Camino a Top:** "+f(topReadiness())+"\n";
+  var td=toeflDays();if(td!=null)md+="- **Días para el TOEFL:** "+(td>=0?td:"—")+" (objetivo "+(state.metas.toeflScore||105)+")\n";
+  md+="\n";
+  if(state.metas.objetivoSemana)md+="## ⭐ Objetivo de la semana\n"+state.metas.objetivoSemana+"\n\n";
+  md+="## 🚀 Camino a Top\n";
+  CATS.forEach(function(cat){var it=(state.metas.hitos||[]).filter(function(x){return x.cat===cat});if(!it.length)return;md+="\n**"+cat+"**\n";
+    it.forEach(function(x){var b=x.estado==="hecho"?"[x]":(x.estado==="curso"?"[/]":"[ ]");md+="- "+b+" "+x.titulo+" — _"+estadoTxt(x.estado)+"_\n"})});
+  md+="\n## 🗓️ Registro (últimos 30 días)\n\n| Fecha | % día | Hábitos cumplidos | Sueño |\n|---|---|---|---|\n";
+  var d=new Date(now);for(var i=0;i<30;i++){var ds=iso(d),o=state.days[ds];
+    if(o&&o.done&&Object.keys(o.done).some(function(k){return o.done[k]})){var s=dayScore(ds),done=Object.keys(o.done).filter(function(k){return o.done[k]}).join(", "),sh=sleepHours(ds);
+      md+="| "+ds+" | "+Math.round(s.pct*100)+"% | "+done+" | "+(sh!=null?sh.toFixed(1)+"h":"—")+" |\n"}d.setDate(d.getDate()-1)}
+  md+="\n> Origen: app **Gimnasio Mental** (https://juanpradomts-dev.github.io/gimnasio-mental/).\n";
+  return md}
+function writeObsidian(manual){if(!state.obsHandle)return Promise.resolve();
+  return verifyPerm(state.obsHandle,manual).then(function(ok){if(!ok){if(manual)obsMsg("Permiso denegado. Toca 'Conectar' otra vez.","err");return}
+    return state.obsHandle.getFileHandle("Gimnasio Mental — Progreso.md",{create:true}).then(function(fh){return fh.createWritable()}).then(function(w){return w.write(genMarkdown()).then(function(){return w.close()})}).then(function(){obsMsg("✓ Guardado en tu vault ("+state.obsHandle.name+") · "+new Date().toLocaleTimeString(),"ok")}).catch(function(e){obsMsg("No se pudo escribir: "+e.message,"err")})})}
+var obsT;function scheduleObsidian(){if(!state.obsHandle||!state.obsAuto)return;clearTimeout(obsT);obsT=setTimeout(function(){writeObsidian(false)},1600)}
+function setObsUI(){var has=!!state.obsHandle;$("#btnObsSave").hidden=!has;$("#obsAutoWrap").hidden=!has;
+  $("#btnObsConnect").textContent=has?("Reconectar vault ("+state.obsHandle.name+")"):"Conectar mi vault de Obsidian";
+  $("#obsAuto").checked=!!state.obsAuto}
+function connectObsidian(){if(!window.showDirectoryPicker){obsMsg("Tu navegador no soporta conexión directa. Usa 'Descargar nota .md' y arrástrala al vault.","err");return}
+  window.showDirectoryPicker({mode:"readwrite",id:"gm-vault"}).then(function(h){state.obsHandle=h;return idbSet("dir",h).then(function(){setObsUI();return writeObsidian(true)})}).catch(function(){})}
+function initObsidian(){
+  try{state.obsAuto=localStorage.getItem("gm_obsauto")==="1"}catch(e){}
+  $("#btnObsConnect").addEventListener("click",connectObsidian);
+  $("#btnObsSave").addEventListener("click",function(){writeObsidian(true)});
+  $("#obsAuto").addEventListener("change",function(){state.obsAuto=$("#obsAuto").checked;try{localStorage.setItem("gm_obsauto",state.obsAuto?"1":"0")}catch(e){}if(state.obsAuto)writeObsidian(false)});
+  $("#btnObsMd").addEventListener("click",function(){var blob=new Blob([genMarkdown()],{type:"text/markdown"});var a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="Gimnasio Mental — Progreso.md";a.click();setTimeout(function(){URL.revokeObjectURL(a.href)},1000)});
+  if(!window.showDirectoryPicker){$("#btnObsConnect").disabled=true;$("#btnObsConnect").textContent="Conexión directa no disponible aquí";obsMsg("En este navegador (p. ej. celular) usa 'Descargar nota .md'.");}
+  else{idbGet("dir").then(function(h){if(h){state.obsHandle=h;setObsUI()}}).catch(function(){})}
+}
+
 /* ---------- arranque ---------- */
 (function boot(){
   try{var th=localStorage.getItem("gm_theme");if(th==="light")document.documentElement.setAttribute("data-theme","light")}catch(e){}
-  loadLS();buildNav();switchTab("hoy");initSupabase();
+  loadLS();buildNav();switchTab("hoy");initSupabase();initObsidian();
 })();
 })();
