@@ -5,14 +5,21 @@
 var $=function(s){return document.querySelector(s)};
 var CHECK='<svg viewBox="0 0 24 24" fill="none" stroke="#04252a" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5 5L20 6"/></svg>';
 var DOW=["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"], MES=["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
-var HABITS=[
+var DEFAULT_HABITS=[
   {id:"piedra", grupo:"Nucleo", emoji:"🪨", name:"Piedra grande del día", meta:"Deep Work del curso duro, sin celular"},
   {id:"ingles", grupo:"Nucleo", emoji:"🇬🇧", name:"Inglés → TOEFL", meta:"Lección + Anki de frases"},
   {id:"anki",   grupo:"Nucleo", emoji:"🧠", name:"Anki (active recall)", meta:"Repaso espaciado, aunque sean 10'"},
   {id:"lectura",grupo:"Nucleo", emoji:"📖", name:"Lectura", meta:"30 min · 1 idea = 1 nota"},
   {id:"ritual", grupo:"Mente",  emoji:"🎲", name:"Ritual de aprendizaje", meta:""},
-  {id:"entreno",grupo:"Cuerpo", emoji:"🏋️", name:"Entreno (gym o casa)", meta:"Técnica antes que peso"}
+  {id:"meditar",grupo:"Mente",  emoji:"🧘", name:"Meditar / calmar la mente", meta:"5-10 min de respiración o foco"},
+  {id:"entreno",grupo:"Cuerpo", emoji:"🏋️", name:"Entreno (gym o casa)", meta:"Técnica antes que peso"},
+  {id:"agua",   grupo:"Cuerpo", emoji:"💧", name:"Hidratación (2L)", meta:"Agua a lo largo del día"},
+  {id:"estiramiento",grupo:"Cuerpo", emoji:"🧎", name:"Estiramiento / postura", meta:"Movilidad y espalda (altura aparente)"},
+  {id:"skincare",grupo:"Cuerpo", emoji:"🧴", name:"Skincare", meta:"Rutina de piel (aspecto)"}
 ];
+var HABITS=[];
+function rebuildHabits(){var cfg=state.metas.habitCfg||{},dis=cfg.disabled||{},cust=cfg.custom||[];
+  HABITS=DEFAULT_HABITS.filter(function(h){return !dis[h.id]}).concat(cust.map(function(c){return {id:c.id,grupo:c.grupo||"Cuerpo",emoji:c.emoji||"⭐",name:c.name,meta:c.meta||"",custom:true}}))}
 var NAV=[
   {id:"hoy",label:"Hoy",title:"Hoy",icon:'<path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>'},
   {id:"progreso",label:"Progreso",title:"Progreso",icon:'<path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/>'},
@@ -83,7 +90,11 @@ function loadLS(){try{var d=localStorage.getItem("gm_days");if(d)state.days=JSON
   if(!state.metas.hitos)state.metas.hitos=HITOS_DEF.map(function(h){return Object.assign({},h)});
   if(!state.metas.registros)state.metas.registros={notas:[],toefl:[]};
   if(!state.metas.registros.notas)state.metas.registros.notas=[];
-  if(!state.metas.registros.toefl)state.metas.registros.toefl=[];}
+  if(!state.metas.registros.toefl)state.metas.registros.toefl=[];
+  if(!state.metas.habitCfg)state.metas.habitCfg={disabled:{},custom:[]};
+  if(!state.metas.habitCfg.disabled)state.metas.habitCfg.disabled={};
+  if(!state.metas.habitCfg.custom)state.metas.habitCfg.custom=[];
+  rebuildHabits();}
 function saveDays(){try{localStorage.setItem("gm_days",JSON.stringify(state.days))}catch(e){}}
 function saveMetas(){try{localStorage.setItem("gm_metas",JSON.stringify(state.metas))}catch(e){}}
 
@@ -169,9 +180,11 @@ function makeCharts(){if(typeof Chart==="undefined")return;
   destroyCharts();
   state.charts.daily=new Chart($("#chDaily"),{type:"line",data:{labels:labels,datasets:[{data:dailyPct,borderColor:accent,backgroundColor:accent+"22",fill:true,tension:.3,pointRadius:2,borderWidth:2}]},options:baseOpts(grid,100,"%")});
   state.charts.habit=new Chart($("#chHabit"),{type:"bar",data:{labels:hlabels,datasets:[{data:hvals,backgroundColor:hvals.map(function(v){return v>=(state.metas.metaPct||80)?good:accent}),borderRadius:6}]},options:Object.assign(baseOpts(grid,100,"%"),{indexAxis:"y"})});
-  state.charts.sleep=new Chart($("#chSleep"),{type:"line",data:{labels:labels,datasets:[{data:sleepArr,borderColor:fire,backgroundColor:fire+"22",fill:true,tension:.3,spanGaps:true,pointRadius:2,borderWidth:2}]},options:baseOpts(grid,11,"h")});}
+  state.charts.sleep=new Chart($("#chSleep"),{type:"line",data:{labels:labels,datasets:[{data:sleepArr,borderColor:fire,backgroundColor:fire+"22",fill:true,tension:.3,spanGaps:true,pointRadius:2,borderWidth:2}]},options:baseOpts(grid,11,"h")});
+  var pl=[],pv=[];lastDates(60).forEach(function(s){var o=state.days[s];if(o&&o.peso){pl.push(s.slice(5));pv.push(o.peso)}});
+  state.charts.peso=new Chart($("#chPeso"),{type:"line",data:{labels:pl,datasets:[{data:pv,borderColor:accent,backgroundColor:accent+"22",fill:true,tension:.3,pointRadius:3,borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{maxRotation:0,autoSkip:true,maxTicksLimit:7}},y:{grid:{color:grid},ticks:{callback:function(v){return v+" kg"}}}}}});}
 function baseOpts(grid,max,suf){return{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{maxRotation:0,autoSkip:true,maxTicksLimit:7}},y:{beginAtZero:true,max:max,grid:{color:grid},ticks:{callback:function(v){return v+suf}}}}}}
-function destroyCharts(){["daily","habit","sleep"].forEach(function(k){if(state.charts[k]){state.charts[k].destroy();state.charts[k]=null}})}
+function destroyCharts(){["daily","habit","sleep","peso"].forEach(function(k){if(state.charts[k]){state.charts[k].destroy();state.charts[k]=null}})}
 function heatColor(pct){if(pct<=0)return"var(--surface-2)";var p=pct>=1?100:(pct>=.75?78:(pct>=.5?55:32));return"color-mix(in srgb, var(--accent) "+p+"%, var(--surface-2))"}
 function renderHeatmap(){var el=$("#heat");if(!el)return;var today=new Date(),off=(today.getDay()+6)%7;
   var end=new Date(today);end.setDate(today.getDate()+(6-off));var d=new Date(end);d.setDate(end.getDate()-(13*7-1));
@@ -243,17 +256,31 @@ function makeRegCharts(ns,ts,tgt){if(typeof Chart==="undefined")return;
   state.charts.notas=new Chart($("#chNotas"),{type:"line",data:{labels:ns.map(function(x){return x.fecha.slice(5)}),datasets:[{data:ns.map(function(x){return +x.nota}),borderColor:accent,backgroundColor:accent+"22",fill:true,tension:.3,pointRadius:3,borderWidth:2},{data:ns.map(function(){return 18}),borderColor:muted,borderDash:[5,5],pointRadius:0,borderWidth:1,fill:false}]},options:baseOpts(grid,20,"")});
   state.charts.toefl=new Chart($("#chToefl"),{type:"line",data:{labels:ts.map(function(x){return x.fecha.slice(5)}),datasets:[{data:ts.map(function(x){return +x.score}),borderColor:good,backgroundColor:good+"22",fill:true,tension:.3,pointRadius:3,borderWidth:2},{data:ts.map(function(){return tgt}),borderColor:muted,borderDash:[5,5],pointRadius:0,borderWidth:1,fill:false}]},options:baseOpts(grid,120,"")})}
 
+/* ---------- métricas diarias + gestor de hábitos ---------- */
+function dotRow(id,val){var h="";for(var i=1;i<=5;i++)h+='<button class="dot-btn'+(i<=val?" on":"")+'" data-metric="'+id+'" data-val="'+i+'" aria-label="'+id+' '+i+'"></button>';return h}
+function renderMetrics(){var o=dayObj(state.activeDate);
+  var a=$("#dotsAnimo");if(a)a.innerHTML=dotRow("animo",o.animo||0);
+  var en=$("#dotsEnergia");if(en)en.innerHTML=dotRow("energia",o.energia||0);
+  var p=$("#peso");if(p)p.value=o.peso||""}
+function grpName(g){return g==="Nucleo"?"Núcleo":g}
+function renderHabitManager(){var cfg=state.metas.habitCfg,html="";
+  DEFAULT_HABITS.forEach(function(h){if(h.id==="ritual")return;var on=!cfg.disabled[h.id];
+    html+='<div class="hmrow"><span style="font-size:18px">'+h.emoji+'</span><div class="hm-main">'+h.name+' <span class="hm-sub">· '+grpName(h.grupo)+'</span></div><label class="switch"><input type="checkbox" data-toggle="'+h.id+'"'+(on?" checked":"")+'><span class="sl"></span></label></div>'});
+  cfg.custom.forEach(function(c){html+='<div class="hmrow"><span style="font-size:18px">'+(c.emoji||"⭐")+'</span><div class="hm-main">'+esc(c.name)+' <span class="hm-sub">· '+grpName(c.grupo)+' · propio</span></div><button class="hm-del" data-delhabit="'+c.id+'" title="Eliminar">✕</button></div>'});
+  var el=$("#habitMgr");if(el)el.innerHTML=html||'<div class="empty">Sin hábitos.</div>'}
+
 /* ---------- header + orquestador ---------- */
 function renderHeader(){var n=NAV.filter(function(x){return x.id===state.tab})[0];$("#pageTitle").textContent=n?n.title:"";
   if(state.tab==="hoy"){var d=parseISO(state.activeDate),t=iso(new Date());$("#pageDate").textContent=(state.activeDate===t?"Hoy · ":"")+DOW[d.getDay()]+" "+d.getDate()+" "+MES[d.getMonth()]}
   else{var td=new Date();$("#pageDate").textContent=DOW[td.getDay()]+" "+td.getDate()+" "+MES[td.getMonth()]}}
 function renderQuote(){var q=QUOTES[dayOfYear(new Date())%QUOTES.length];$("#qText").textContent="“"+q[0]+"”";$("#qAuth").textContent="— "+q[1];$("#quoteCard").hidden=false}
 function render(){renderHeader();
-  if(state.tab==="hoy"){renderQuote();ring();renderLists();renderSleep();renderNota();renderMiniKpis();renderWeek()}
+  if(state.tab==="hoy"){renderQuote();ring();renderLists();renderSleep();renderNota();renderMetrics();renderMiniKpis();renderWeek()}
   else if(state.tab==="progreso"){renderKpis();renderHeatmap();makeCharts()}
   else if(state.tab==="top"){renderTop()}
   else if(state.tab==="registros"){renderRegistros()}
-  else if(state.tab==="metas"){renderMetas()}}
+  else if(state.tab==="metas"){renderMetas()}
+  else if(state.tab==="ajustes"){renderHabitManager()}}
 
 /* ---------- eventos ---------- */
 document.addEventListener("click",function(e){
@@ -267,7 +294,12 @@ document.addEventListener("click",function(e){
   var pill=e.target.closest(".pill");if(pill){cycleHito(pill.getAttribute("data-hito"));return}
   var dn=e.target.closest("[data-del-nota]");if(dn){var idn=dn.getAttribute("data-del-nota");state.metas.registros.notas=state.metas.registros.notas.filter(function(x){return x.id!==idn});saveMetas();pushMetas();scheduleObsidian();renderRegistros();return}
   var dt=e.target.closest("[data-del-toefl]");if(dt){var idt=dt.getAttribute("data-del-toefl");state.metas.registros.toefl=state.metas.registros.toefl.filter(function(x){return x.id!==idt});saveMetas();pushMetas();scheduleObsidian();renderRegistros();return}
+  var db=e.target.closest(".dot-btn");if(db){var m=db.getAttribute("data-metric"),v=+db.getAttribute("data-val");var o=state.days[state.activeDate]||(state.days[state.activeDate]={done:{},dormir:"",despertar:"",nota:""});o[m]=(o[m]===v)?0:v;touch(state.activeDate);renderMetrics();return}
+  var dh=e.target.closest("[data-delhabit]");if(dh){var idh=dh.getAttribute("data-delhabit");state.metas.habitCfg.custom=state.metas.habitCfg.custom.filter(function(x){return x.id!==idh});saveMetas();pushMetas();rebuildHabits();scheduleObsidian();renderHabitManager();return}
 });
+document.addEventListener("change",function(e){var tg=e.target.closest("[data-toggle]");if(!tg)return;
+  var id=tg.getAttribute("data-toggle");if(tg.checked)delete state.metas.habitCfg.disabled[id];else state.metas.habitCfg.disabled[id]=true;
+  saveMetas();pushMetas();rebuildHabits();scheduleObsidian();renderHabitManager()});
 $("#dormir").addEventListener("change",sleepChange);$("#despertar").addEventListener("change",sleepChange);
 function sleepChange(){var o=state.days[state.activeDate]||(state.days[state.activeDate]={done:{},dormir:"",despertar:"",nota:""});o.dormir=$("#dormir").value;o.despertar=$("#despertar").value;touch(state.activeDate);renderSleep();ring();renderMiniKpis()}
 var gT;$("#goal").addEventListener("input",function(){state.metas.objetivoSemana=$("#goal").value;saveMetas();clearTimeout(gT);gT=setTimeout(pushMetas,600);scheduleObsidian()});
@@ -284,6 +316,11 @@ $("#rtAdd").addEventListener("click",function(){var score=parseInt($("#rtScore")
   state.metas.registros.toefl.push({id:"t"+Date.now(),score:score,fecha:fecha});saveMetas();pushMetas();scheduleObsidian();
   $("#rtScore").value="";renderRegistros()});
 function obsAlert(m){try{alert(m)}catch(e){}}
+$("#peso").addEventListener("change",function(){var o=state.days[state.activeDate]||(state.days[state.activeDate]={done:{},dormir:"",despertar:"",nota:""});var v=parseFloat($("#peso").value);if(v>0)o.peso=v;else delete o.peso;touch(state.activeDate)});
+$("#hbAdd").addEventListener("click",function(){var name=$("#hbName").value.trim(),emoji=$("#hbEmoji").value.trim()||"⭐",grupo=$("#hbGrupo").value;
+  if(!name){obsAlert("Escribe el nombre del hábito.");return}
+  state.metas.habitCfg.custom.push({id:"c"+Date.now(),name:name,emoji:emoji,grupo:grupo,meta:""});
+  saveMetas();pushMetas();rebuildHabits();scheduleObsidian();$("#hbName").value="";$("#hbEmoji").value="";renderHabitManager()});
 
 /* ---------- respaldo / tema ---------- */
 $("#btnExport").addEventListener("click",function(){var blob=new Blob([JSON.stringify({days:state.days,metas:state.metas},null,2)],{type:"application/json"});var a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="gimnasio-mental-"+iso(new Date())+".json";a.click();setTimeout(function(){URL.revokeObjectURL(a.href)},1000)});
@@ -356,10 +393,10 @@ function genMarkdown(){var now=new Date(),f=function(v){return Math.round(v*100)
   else md+="_Sin registros de práctica todavía._\n";
   md+="\n## 🔥 Rachas por hábito\n";
   HABITS.forEach(function(h){md+="- "+h.name+": "+streak(h.id)+" días\n"});
-  md+="\n## 🗓️ Registro diario (últimos 60 días)\n\n| Fecha | % día | Hábitos cumplidos | Sueño | Nota |\n|---|---|---|---|---|\n";
+  md+="\n## 🗓️ Registro diario (últimos 60 días)\n\n| Fecha | % día | Hábitos cumplidos | Sueño | Ánimo | Energía | Peso | Nota |\n|---|---|---|---|---|---|---|---|\n";
   var d=new Date(now);for(var i=0;i<60;i++){var ds=iso(d),o=state.days[ds];
-    if(o&&((o.done&&Object.keys(o.done).some(function(k){return o.done[k]}))||o.nota)){var s=dayScore(ds),done=o.done?Object.keys(o.done).filter(function(k){return o.done[k]}).join(", "):"",sh=sleepHours(ds);
-      md+="| "+ds+" | "+Math.round(s.pct*100)+"% | "+done+" | "+(sh!=null?sh.toFixed(1)+"h":"—")+" | "+((o.nota||"").replace(/\n/g," ").replace(/\|/g,"/"))+" |\n"}d.setDate(d.getDate()-1)}
+    if(o&&((o.done&&Object.keys(o.done).some(function(k){return o.done[k]}))||o.nota||o.animo||o.energia||o.peso)){var s=dayScore(ds),done=o.done?Object.keys(o.done).filter(function(k){return o.done[k]}).join(", "):"",sh=sleepHours(ds);
+      md+="| "+ds+" | "+Math.round(s.pct*100)+"% | "+done+" | "+(sh!=null?sh.toFixed(1)+"h":"—")+" | "+(o.animo?o.animo+"/5":"—")+" | "+(o.energia?o.energia+"/5":"—")+" | "+(o.peso?o.peso+"kg":"—")+" | "+((o.nota||"").replace(/\n/g," ").replace(/\|/g,"/"))+" |\n"}d.setDate(d.getDate()-1)}
   md+="\n> Origen: app **Gimnasio Mental** (https://juanpradomts-dev.github.io/gimnasio-mental/).\n";
   return md}
 function writeObsidian(manual){if(!state.obsHandle)return Promise.resolve();
