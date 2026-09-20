@@ -1,6 +1,6 @@
 /* Service worker: offline-first para el shell de la app.
    Sube la versión (CACHE) cuando cambies index.html/app.js para forzar refresco. */
-var CACHE="gm-v1";
+var CACHE="gm-v2";
 var SHELL=[
   "./","./index.html","./app.js","./manifest.webmanifest",
   "./icon-192.png","./icon-512.png",

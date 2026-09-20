@@ -3,223 +3,333 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0e7c86">
+<meta name="theme-color" content="#0a0f16">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>Gimnasio Mental</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=Sora:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <style>
+  /* ===== DARK por defecto (profesional) ===== */
   :root{
-    --bg:#f1f5f6; --surface:#ffffff; --surface-2:#eaf0f2; --ink:#0e1b23;
-    --muted:#5a7180; --border:#d8e2e6; --accent:#0e7c86; --accent-ink:#0a5b63;
-    --good:#12a150; --fire:#d9722a; --track:#dde7ea; --warn:#c2410c;
-    --shadow:0 1px 2px rgba(14,27,35,.06),0 6px 20px rgba(14,27,35,.05);
+    --bg:#0a0f16; --bg-2:#0c131c; --surface:#121b26; --surface-2:#17222f; --elev:#1c2a39;
+    --ink:#e9eff4; --muted:#8a9bab; --faint:#5c6b7a; --border:#223140; --border-2:#2b3d4e;
+    --accent:#2dd4d9; --accent-ink:#7fe9ec; --accent-dim:rgba(45,212,217,.13);
+    --good:#34d399; --warn:#fbbf24; --bad:#f87171; --fire:#fb923c;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.35);
+    --grad:linear-gradient(135deg,#2dd4d9,#3b82f6);
+    color-scheme:dark;
     font-family:'IBM Plex Sans',system-ui,-apple-system,sans-serif;
   }
-  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-    --bg:#081119; --surface:#0f1d27; --surface-2:#14252f; --ink:#e7f0f4;
-    --muted:#829aa8; --border:#1d3240; --accent:#2dd4d9; --accent-ink:#7fe9ec;
-    --good:#37cf7f; --fire:#f2a54b; --track:#162934; --warn:#fb923c;
-    --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35);
-  }}
-  :root[data-theme="dark"]{
-    --bg:#081119; --surface:#0f1d27; --surface-2:#14252f; --ink:#e7f0f4;
-    --muted:#829aa8; --border:#1d3240; --accent:#2dd4d9; --accent-ink:#7fe9ec;
-    --good:#37cf7f; --fire:#f2a54b; --track:#162934; --warn:#fb923c;
-    --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35);
+  :root[data-theme="light"]{
+    --bg:#eef2f4; --bg-2:#e7edf0; --surface:#ffffff; --surface-2:#f2f6f8; --elev:#ffffff;
+    --ink:#0e1b23; --muted:#566a78; --faint:#8195a3; --border:#dbe4e8; --border-2:#cdd9df;
+    --accent:#0e7c86; --accent-ink:#0a5b63; --accent-dim:rgba(14,124,134,.10);
+    --good:#12a150; --warn:#c2740c; --bad:#dc2626; --fire:#d9722a;
+    --shadow:0 1px 2px rgba(14,27,35,.06),0 8px 26px rgba(14,27,35,.06);
+    --grad:linear-gradient(135deg,#0e7c86,#2563eb);
+    color-scheme:light;
   }
   *{box-sizing:border-box}
-  html,body{margin:0}
-  body{background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;
-    padding-top:env(safe-area-inset-top,0);padding-bottom:env(safe-area-inset-bottom,0);}
-  img{max-width:100%}
-  [hidden]{display:none!important}
+  html,body{margin:0;height:100%}
+  body{background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;line-height:1.45;
+    padding-top:env(safe-area-inset-top,0);padding-bottom:env(safe-area-inset-bottom,0)}
+  img{max-width:100%} [hidden]{display:none!important}
+  h1,h2,h3{font-family:'Sora',sans-serif;letter-spacing:-.015em;margin:0}
   .mono{font-family:'IBM Plex Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums}
-  .wrap{max-width:660px;margin:0 auto;padding-inline:16px;padding-block:0 92px}
+  button{font:inherit;color:inherit}
+  ::selection{background:var(--accent-dim)}
 
-  header{position:sticky;top:env(safe-area-inset-top,0);z-index:5;
-    background:color-mix(in srgb,var(--bg) 90%,transparent);backdrop-filter:blur(8px);
-    border-bottom:1px solid var(--border);padding-block:13px;margin-bottom:16px}
-  .hg{max-width:660px;margin:0 auto;padding-inline:16px;display:flex;align-items:center;gap:14px}
-  .ht{flex:1;min-width:0}
-  .kicker{font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:var(--accent-ink);font-weight:600;margin:0}
-  h1{font-size:19px;font-weight:600;margin:2px 0 0;letter-spacing:-.01em}
-  .status{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:5px;margin-top:3px}
-  .dot{width:7px;height:7px;border-radius:50%;background:var(--muted)}
-  .dot.on{background:var(--good)} .dot.warn{background:var(--fire)}
+  /* ===== SHELL ===== */
+  .shell{display:grid;grid-template-columns:1fr;min-height:100%}
+  .sidebar{display:none}
+  @media(min-width:920px){
+    .shell{grid-template-columns:250px 1fr}
+    .sidebar{display:flex;flex-direction:column;position:sticky;top:0;height:100vh;
+      background:var(--bg-2);border-right:1px solid var(--border);padding:22px 16px}
+    .bottomnav{display:none!important}
+    main{padding-bottom:40px}
+  }
 
-  .lbl{font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);font-weight:600;margin:22px 2px 9px;display:flex;justify-content:space-between;align-items:baseline}
-  .lbl:first-child{margin-top:0}
-  .lbl span{letter-spacing:0;text-transform:none;font-weight:500}
-  .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow)}
-  .pad{padding:14px 15px}
+  /* ===== SIDEBAR ===== */
+  .brand{display:flex;align-items:center;gap:11px;padding:4px 8px 22px}
+  .brand .logo{width:34px;height:34px;border-radius:9px;background:var(--grad);display:grid;place-items:center;flex:none;box-shadow:0 4px 14px rgba(45,212,217,.3)}
+  .brand .logo svg{width:19px;height:19px}
+  .brand b{font-family:'Sora';font-weight:700;font-size:15px;letter-spacing:-.01em}
+  .brand small{display:block;font-size:10.5px;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;font-weight:600}
+  .navlink{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:none;border:none;
+    color:var(--muted);border-radius:10px;padding:11px 12px;cursor:pointer;font-size:14px;font-weight:500;margin-bottom:2px}
+  .navlink svg{width:19px;height:19px;flex:none}
+  .navlink:hover{background:var(--surface);color:var(--ink)}
+  .navlink[aria-current="true"]{background:var(--accent-dim);color:var(--accent-ink);font-weight:600}
+  .navlink:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .side-foot{margin-top:auto;padding:12px 10px 2px;border-top:1px solid var(--border);font-size:12px;color:var(--muted)}
+  .side-foot .status{display:flex;align-items:center;gap:7px;margin-bottom:10px}
 
+  /* ===== TOPBAR ===== */
+  .topbar{display:flex;align-items:center;gap:12px;position:sticky;top:env(safe-area-inset-top,0);z-index:8;
+    background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--border);padding:13px 18px}
+  .topbar .mlogo{width:30px;height:30px;border-radius:8px;background:var(--grad);display:grid;place-items:center;flex:none}
+  .topbar .mlogo svg{width:17px;height:17px}
+  @media(min-width:920px){.topbar .mlogo{display:none}}
+  .tb-title{flex:1;min-width:0}
+  .tb-title h1{font-size:18px;font-weight:600}
+  .tb-title .date{font-size:12.5px;color:var(--muted);margin-top:1px}
+  .iconbtn{background:var(--surface);border:1px solid var(--border);border-radius:9px;width:38px;height:38px;display:grid;place-items:center;cursor:pointer;color:var(--muted);flex:none}
+  .iconbtn:hover{color:var(--ink);border-color:var(--border-2)}
+  .iconbtn svg{width:18px;height:18px}
+  .iconbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+  .content{max-width:1160px;margin:0 auto;padding:20px 18px 96px}
+  @media(min-width:920px){.content{padding:24px 30px 40px}}
+
+  /* ===== primitives ===== */
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow)}
+  .pad{padding:16px 17px}
+  .sect{font-family:'Sora';font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:600;margin:26px 3px 12px;display:flex;justify-content:space-between;align-items:baseline}
+  .sect:first-child{margin-top:0}.sect .hint{letter-spacing:0;text-transform:none;font-weight:500;font-family:'IBM Plex Sans'}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--faint);flex:none}
+  .dot.on{background:var(--good);box-shadow:0 0 0 3px color-mix(in srgb,var(--good) 22%,transparent)}
+  .dot.warn{background:var(--fire)}
+
+  /* dashboard grids */
+  .dash{display:grid;gap:18px;grid-template-columns:1fr}
+  @media(min-width:920px){.dash.two{grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr)}}
+  .kpis{display:grid;gap:12px;grid-template-columns:repeat(2,1fr)}
+  @media(min-width:560px){.kpis{grid-template-columns:repeat(3,1fr)}}
+  @media(min-width:920px){.kpis.k2{grid-template-columns:repeat(2,1fr)}}
+  .kpi{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 15px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+  .kpi .n{font-family:'Sora';font-size:26px;font-weight:700;line-height:1}
+  .kpi .t{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:6px}
+  .kpi .s{font-size:11.5px;color:var(--faint);margin-top:3px}
+  .kpi.accent .n{color:var(--accent-ink)} .kpi.hero .n{font-size:34px}
+  .kpi .spark{position:absolute;right:0;bottom:0;width:64px;height:34px;opacity:.5}
+
+  /* ring */
+  .ringwrap{display:flex;align-items:center;gap:16px}
+  .ringwrap .meta{flex:1}
+  .ringwrap .big{font-family:'Sora';font-size:15px;font-weight:600}
+  .ringwrap .sub{font-size:12.5px;color:var(--muted);margin-top:2px}
+
+  /* habit rows */
   .list{overflow:hidden}
-  .row{display:flex;align-items:center;gap:13px;width:100%;text-align:left;background:none;border:none;border-top:1px solid var(--border);color:var(--ink);font:inherit;padding:13px 15px;cursor:pointer}
+  .row{display:flex;align-items:center;gap:13px;width:100%;text-align:left;background:none;border:none;border-top:1px solid var(--border);color:var(--ink);padding:13px 15px;cursor:pointer}
   .row:first-child{border-top:none}
+  .row:hover{background:var(--surface-2)}
   .row:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
-  .emoji{font-size:20px;width:24px;text-align:center;flex:none}
+  .emoji{font-size:20px;width:26px;text-align:center;flex:none}
   .rt{flex:1;min-width:0}.rn{font-size:14.5px;font-weight:500}.rm{font-size:12px;color:var(--muted);margin-top:1px}
   .streak{font-size:12px;color:var(--fire);font-weight:600}
-  .check{width:26px;height:26px;border-radius:8px;border:2px solid var(--border);flex:none;display:grid;place-items:center;background:var(--surface-2);transition:.15s}
+  .check{width:26px;height:26px;border-radius:8px;border:2px solid var(--border-2);flex:none;display:grid;place-items:center;background:var(--surface-2);transition:.15s}
   .row[aria-pressed="true"] .check{background:var(--good);border-color:var(--good)}
   .check svg{width:15px;height:15px;opacity:0;transform:scale(.6);transition:.15s}
   .row[aria-pressed="true"] .check svg{opacity:1;transform:scale(1)}
   .row[aria-pressed="true"] .rn{color:var(--muted)}
-  .row.na{opacity:.5;cursor:default}.row.na .check{visibility:hidden}
+  .row.na{opacity:.45;cursor:default}.row.na .check{visibility:hidden}
 
-  .sleep{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:12px}
+  .sleep{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
   .stimes{display:flex;gap:10px;flex:1;min-width:190px}
-  .field{flex:1}.field label{display:block;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
-  .field input{width:100%;border:1px solid var(--border);background:var(--surface-2);color:var(--ink);border-radius:9px;padding:7px 9px;font-family:'IBM Plex Mono',monospace;font-size:14px}
-  .field input:focus{outline:none;border-color:var(--accent)}
+  .field{flex:1}.field label{display:block;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+  .field input,.metarow input,.synced-in input{width:100%;border:1px solid var(--border);background:var(--surface-2);color:var(--ink);border-radius:9px;padding:8px 10px;font-family:'IBM Plex Mono',monospace;font-size:14px}
+  .field input:focus,.metarow input:focus,.synced-in input:focus{outline:none;border-color:var(--accent)}
   .hrs{font-size:15px;font-weight:600;white-space:nowrap}.hrs small{display:block;font-size:10px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
 
-  .kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
-  .kpi{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 13px;box-shadow:var(--shadow)}
-  .kpi .n{font-size:24px;font-weight:600;line-height:1}
-  .kpi .t{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-top:5px}
-  .kpi .s{font-size:11.5px;color:var(--muted);margin-top:2px}
-  .kpi.big .n{font-size:30px} .kpi.accent .n{color:var(--accent-ink)}
-
-  .chartcard{padding:14px 15px 8px;margin-bottom:12px}
-  .chartcard h3{font-size:13px;font-weight:600;margin:0 0 2px} .chartcard p{font-size:11.5px;color:var(--muted);margin:0 0 10px}
-  .cwrap{position:relative;height:170px}
-
-  .week{display:grid;grid-template-columns:repeat(7,1fr);gap:7px}
-  .day{background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:9px 3px 8px;text-align:center;cursor:pointer;color:var(--ink);font:inherit;display:flex;flex-direction:column;align-items:center;gap:6px}
-  .day:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+  .week{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
+  .day{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px 3px 9px;text-align:center;cursor:pointer;color:var(--ink);display:flex;flex-direction:column;align-items:center;gap:7px}
+  .day:hover{border-color:var(--border-2)} .day:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
   .day.sel{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
   .day .dn{font-size:10px;text-transform:uppercase;color:var(--muted)}
   .day .dnum{font-size:13px;font-weight:600}.day.today .dnum{color:var(--accent-ink)}
 
-  .goalinp{width:100%;border:none;background:transparent;color:var(--ink);font-size:15px;font-family:inherit;padding:0}
-  .goalinp:focus{outline:none}.goalinp::placeholder{color:var(--muted)}
-  .metarow{display:flex;align-items:center;gap:12px;border-top:1px solid var(--border);padding:12px 0}
-  .metarow:first-of-type{border-top:none}
-  .metarow label{flex:1;font-size:14px}
-  .metarow input{width:130px;border:1px solid var(--border);background:var(--surface-2);color:var(--ink);border-radius:9px;padding:7px 9px;font-size:14px;font-family:'IBM Plex Mono',monospace}
-  .metarow input[type=date]{width:150px}
+  .chartcard{padding:16px 17px 10px}
+  .chartcard h3{font-size:14px;font-weight:600} .chartcard p{font-size:11.5px;color:var(--muted);margin:2px 0 12px}
+  .cwrap{position:relative;height:190px}
+  .charts-grid{display:grid;gap:16px;grid-template-columns:1fr}
+  @media(min-width:920px){.charts-grid{grid-template-columns:1fr 1fr}.charts-grid .span2{grid-column:1/-1}}
 
-  .btn{display:inline-flex;align-items:center;gap:7px;background:var(--accent);color:#fff;border:none;border-radius:10px;padding:10px 15px;font:inherit;font-weight:600;font-size:14px;cursor:pointer}
-  .btn.ghost{background:transparent;color:var(--accent-ink);border:1px solid var(--border)}
+  /* ===== Camino a Top ===== */
+  .tophdr{display:flex;align-items:center;gap:18px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px 20px;box-shadow:var(--shadow);
+    background-image:radial-gradient(120% 140% at 100% 0,var(--accent-dim),transparent 60%)}
+  .tophdr .rc{flex:none}
+  .tophdr .tt{flex:1;min-width:200px}
+  .tophdr h2{font-size:19px;font-weight:700}
+  .tophdr p{font-size:13px;color:var(--muted);margin:5px 0 0;max-width:52ch}
+  .catgrid{display:grid;gap:16px;grid-template-columns:1fr;margin-top:18px}
+  @media(min-width:720px){.catgrid{grid-template-columns:1fr 1fr}}
+  .catcard .ch{display:flex;align-items:center;justify-content:space-between;padding:13px 15px;border-bottom:1px solid var(--border)}
+  .catcard .ch h3{font-size:13.5px;font-weight:600}
+  .catcard .ch .pct{font-size:12px;color:var(--muted);font-family:'IBM Plex Mono'}
+  .mile{display:flex;align-items:flex-start;gap:12px;padding:12px 15px;border-top:1px solid var(--border)}
+  .mile:first-of-type{border-top:none}
+  .mile .mt{flex:1;min-width:0}.mile .mn{font-size:14px;font-weight:500}.mile .ms{font-size:12px;color:var(--muted);margin-top:2px}
+  .pill{border:1px solid var(--border-2);background:var(--surface-2);color:var(--muted);border-radius:999px;padding:4px 11px;font-size:11.5px;font-weight:600;cursor:pointer;white-space:nowrap;flex:none}
+  .pill:hover{border-color:var(--accent)}
+  .pill.curso{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 45%,transparent);background:color-mix(in srgb,var(--warn) 12%,transparent)}
+  .pill.hecho{color:var(--good);border-color:color-mix(in srgb,var(--good) 45%,transparent);background:color-mix(in srgb,var(--good) 12%,transparent)}
+  .pill:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .bar{height:6px;border-radius:99px;background:var(--surface-2);overflow:hidden;border:1px solid var(--border)}
+  .bar>i{display:block;height:100%;background:var(--grad);border-radius:99px}
+
+  /* metas / forms */
+  .goalinp{width:100%;border:none;background:transparent;color:var(--ink);font-size:16px;font-family:'Sora';font-weight:500;padding:0}
+  .goalinp:focus{outline:none}.goalinp::placeholder{color:var(--faint);font-family:'IBM Plex Sans';font-weight:400}
+  .metarow{display:flex;align-items:center;gap:12px;border-top:1px solid var(--border);padding:13px 0}
+  .metarow:first-of-type{border-top:none}.metarow label{flex:1;font-size:14px}
+  .metarow input{width:140px;flex:none}.metarow input[type=date]{width:160px}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--accent);color:#04252a;border:none;border-radius:10px;padding:11px 16px;font-weight:600;font-size:14px;cursor:pointer}
+  .btn:hover{filter:brightness(1.06)} .btn.ghost{background:transparent;color:var(--accent-ink);border:1px solid var(--border-2)}
   .btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
   .stack{display:flex;flex-direction:column;gap:10px}
-  .synced-in input{width:100%;border:1px solid var(--border);background:var(--surface-2);color:var(--ink);border-radius:9px;padding:9px 11px;font-size:13px;font-family:'IBM Plex Mono',monospace;margin-top:6px}
   .synced-in label{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
-  .msg{font-size:12.5px;color:var(--muted);margin:8px 0 0;line-height:1.5}
-  .msg.ok{color:var(--good)} .msg.err{color:var(--warn)}
+  .synced-in input{margin-top:6px;font-size:13px}.synced-in{margin-bottom:10px}
+  .msg{font-size:12.5px;color:var(--muted);margin:8px 0 0;line-height:1.5}.msg.ok{color:var(--good)}.msg.err{color:var(--bad)}
 
-  /* tab bar */
-  nav{position:fixed;bottom:0;left:0;right:0;z-index:6;background:color-mix(in srgb,var(--bg) 94%,transparent);backdrop-filter:blur(10px);border-top:1px solid var(--border);padding-bottom:env(safe-area-inset-bottom,0)}
-  .nav-in{max-width:660px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr)}
-  .tab{background:none;border:none;color:var(--muted);font:inherit;font-size:11px;padding:9px 0 8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px}
-  .tab svg{width:22px;height:22px}
-  .tab[aria-selected="true"]{color:var(--accent-ink)}
+  /* bottom nav (mobile) */
+  .bottomnav{position:fixed;bottom:0;left:0;right:0;z-index:9;background:color-mix(in srgb,var(--bg) 94%,transparent);backdrop-filter:blur(12px);border-top:1px solid var(--border);padding-bottom:env(safe-area-inset-bottom,0)}
+  .bn-in{display:grid;grid-template-columns:repeat(5,1fr);max-width:600px;margin:0 auto}
+  .tab{background:none;border:none;color:var(--muted);font-size:10.5px;padding:9px 0 8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px}
+  .tab svg{width:22px;height:22px}.tab[aria-selected="true"]{color:var(--accent-ink)}
   .tab:focus-visible{outline:2px solid var(--accent);outline-offset:-3px}
-  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+  @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
 <body>
-<header>
-  <div class="hg">
-    <div class="ring">
-      <svg width="52" height="52" viewBox="0 0 54 54" aria-hidden="true">
-        <circle cx="27" cy="27" r="23" fill="none" stroke="var(--track)" stroke-width="6"/>
-        <circle id="ringFill" cx="27" cy="27" r="23" fill="none" stroke="var(--accent)" stroke-width="6" stroke-linecap="round" stroke-dasharray="144.5" stroke-dashoffset="144.5" transform="rotate(-90 27 27)"/>
-        <text id="ringPct" x="27" y="31" text-anchor="middle" class="mono" font-size="14" font-weight="600" fill="var(--ink)">0%</text>
-      </svg>
+<div class="shell">
+  <!-- ===== SIDEBAR (desktop) ===== -->
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="#04252a" stroke-width="2.4"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="0.5" fill="#04252a"/></svg></span>
+      <span><b>Gimnasio Mental</b><small>Rumbo al norte</small></span>
     </div>
-    <div class="ht">
-      <p class="kicker">Gimnasio Mental</p>
-      <h1 id="dateTitle">Hoy</h1>
-      <div class="status"><span id="statusDot" class="dot"></span><span id="statusText">local</span></div>
+    <nav id="sidenav"></nav>
+    <div class="side-foot">
+      <div class="status"><span id="sDot" class="dot"></span><span id="sTxt">local</span></div>
+      <div id="sSub">Datos en este dispositivo</div>
     </div>
-  </div>
-</header>
+  </aside>
 
-<div class="wrap">
-  <!-- ===== HOY ===== -->
-  <div id="tab-hoy">
-    <p class="lbl">Núcleo — el 20% vital</p>
-    <div class="card list" id="listNucleo"></div>
-    <p class="lbl">Mente — inteligencia + memoria</p>
-    <div class="card list" id="listMente"></div>
-    <div class="card pad sleep">
-      <span class="emoji">😴</span>
-      <div class="stimes">
-        <div class="field"><label for="dormir">Me acosté</label><input id="dormir" type="time"></div>
-        <div class="field"><label for="despertar">Desperté</label><input id="despertar" type="time"></div>
+  <!-- ===== MAIN ===== -->
+  <main>
+    <div class="topbar">
+      <span class="mlogo"><svg viewBox="0 0 24 24" fill="none" stroke="#04252a" stroke-width="2.4"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/></svg></span>
+      <div class="tb-title"><h1 id="pageTitle">Hoy</h1><div class="date" id="pageDate"></div></div>
+      <button class="iconbtn" id="btnThemeTop" title="Cambiar tema" aria-label="Cambiar tema"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg></button>
+    </div>
+
+    <div class="content">
+      <!-- ===== HOY (dashboard) ===== -->
+      <div id="v-hoy">
+        <div class="dash two">
+          <div>
+            <div class="sect">Núcleo — el 20% vital</div>
+            <div class="card list" id="listNucleo"></div>
+            <div class="sect">Mente — inteligencia + memoria</div>
+            <div class="card list" id="listMente"></div>
+            <div class="card pad sleep" style="margin-top:12px">
+              <span class="emoji">😴</span>
+              <div class="stimes">
+                <div class="field"><label for="dormir">Me acosté</label><input id="dormir" type="time"></div>
+                <div class="field"><label for="despertar">Desperté</label><input id="despertar" type="time"></div>
+              </div>
+              <div class="hrs" id="sleepHrs">—<small>sueño</small></div>
+            </div>
+            <div class="sect">Cuerpo</div>
+            <div class="card list" id="listCuerpo"></div>
+          </div>
+          <div>
+            <div class="sect">Tu día</div>
+            <div class="card pad ringwrap">
+              <svg class="rc" width="80" height="80" viewBox="0 0 80 80" aria-hidden="true">
+                <circle cx="40" cy="40" r="34" fill="none" stroke="var(--surface-2)" stroke-width="8"/>
+                <circle id="ringFill" cx="40" cy="40" r="34" fill="none" stroke="var(--accent)" stroke-width="8" stroke-linecap="round" stroke-dasharray="213.6" stroke-dashoffset="213.6" transform="rotate(-90 40 40)"/>
+                <text id="ringPct" x="40" y="46" text-anchor="middle" class="mono" font-size="19" font-weight="700" fill="var(--ink)">0%</text>
+              </svg>
+              <div class="meta"><div class="big" id="ringBig">Vas empezando</div><div class="sub" id="ringSub">Marca tus hábitos del día</div></div>
+            </div>
+            <div class="sect">Números</div>
+            <div class="kpis k2" id="miniKpis"></div>
+            <div class="sect">Semana <span class="hint" id="weekRange"></span></div>
+            <div class="week" id="week"></div>
+          </div>
+        </div>
       </div>
-      <div class="hrs" id="sleepHrs">—<small>sueño</small></div>
-    </div>
-    <p class="lbl">Cuerpo</p>
-    <div class="card list" id="listCuerpo"></div>
-    <p class="lbl">Semana <span id="weekRange"></span></p>
-    <div class="week" id="week"></div>
-  </div>
 
-  <!-- ===== PROGRESO ===== -->
-  <div id="tab-progreso" hidden>
-    <p class="lbl">Tus números</p>
-    <div class="kpis" id="kpis"></div>
-    <p class="lbl">Gráficas</p>
-    <div class="card chartcard"><h3>Cumplimiento diario</h3><p>% de hábitos completados por día · últimos 21 días</p><div class="cwrap"><canvas id="chDaily"></canvas></div></div>
-    <div class="card chartcard"><h3>Adherencia por hábito</h3><p>% de días cumplidos · últimos 30 días</p><div class="cwrap" style="height:210px"><canvas id="chHabit"></canvas></div></div>
-    <div class="card chartcard"><h3>Horas de sueño</h3><p>últimos 21 días · banda meta 7–8 h</p><div class="cwrap"><canvas id="chSleep"></canvas></div></div>
-  </div>
-
-  <!-- ===== METAS ===== -->
-  <div id="tab-metas" hidden>
-    <p class="lbl">Objetivo estelar de la semana</p>
-    <div class="card pad"><input id="goal" class="goalinp" type="text" placeholder="Ej: dejar reservado el TOEFL + 2 hojas de IO" autocomplete="off"></div>
-    <p class="lbl">Metas que te guían <span>los números del norte</span></p>
-    <div class="card pad">
-      <div class="metarow"><label for="mToefl">📅 Fecha objetivo TOEFL</label><input id="mToefl" type="date"></div>
-      <div class="metarow"><label for="mPct">🎯 Meta de cumplimiento semanal (%)</label><input id="mPct" type="number" min="0" max="100" inputmode="numeric"></div>
-      <div class="metarow"><label for="mSleep">😴 Meta de horas de sueño</label><input id="mSleep" type="number" min="0" max="12" step="0.5" inputmode="decimal"></div>
-      <div class="metarow"><label for="mRacha">🔥 Meta de racha (días seguidos)</label><input id="mRacha" type="number" min="0" inputmode="numeric"></div>
-    </div>
-    <div class="kpis" id="metaKpis" style="margin-top:12px"></div>
-  </div>
-
-  <!-- ===== AJUSTES ===== -->
-  <div id="tab-ajustes" hidden>
-    <p class="lbl">Sincronización en la nube (Supabase)</p>
-    <div class="card pad">
-      <p class="msg">Conecta tu proyecto gratis de Supabase para sincronizar tu progreso entre celular y PC. Tus claves se guardan solo en este dispositivo, nunca en el código. Pasos en el <b>README</b>.</p>
-      <div class="synced-in" style="margin-top:10px"><label for="supUrl">Project URL</label><input id="supUrl" type="url" placeholder="https://xxxx.supabase.co" autocomplete="off"></div>
-      <div class="synced-in"><label for="supKey">Anon public key</label><input id="supKey" type="text" placeholder="eyJhbGci..." autocomplete="off"></div>
-      <div class="stack" style="margin-top:12px">
-        <button class="btn" id="btnSaveSup">Guardar y conectar</button>
-        <div class="synced-in" id="authBox" hidden><label for="supEmail">Tu correo (te llega un enlace mágico)</label><input id="supEmail" type="email" placeholder="juanpradomts@gmail.com" autocomplete="email"></div>
-        <button class="btn ghost" id="btnLogin" hidden>Enviarme enlace de acceso</button>
-        <button class="btn ghost" id="btnLogout" hidden>Cerrar sesión de sync</button>
+      <!-- ===== PROGRESO ===== -->
+      <div id="v-progreso" hidden>
+        <div class="sect">Tus números</div>
+        <div class="kpis" id="kpis"></div>
+        <div class="sect">Gráficas</div>
+        <div class="charts-grid">
+          <div class="card chartcard span2"><h3>Cumplimiento diario</h3><p>% de hábitos completados por día · últimos 21 días</p><div class="cwrap"><canvas id="chDaily"></canvas></div></div>
+          <div class="card chartcard"><h3>Adherencia por hábito</h3><p>% de días cumplidos · últimos 30 días</p><div class="cwrap" style="height:230px"><canvas id="chHabit"></canvas></div></div>
+          <div class="card chartcard"><h3>Horas de sueño</h3><p>últimos 21 días · meta 7–8 h</p><div class="cwrap" style="height:230px"><canvas id="chSleep"></canvas></div></div>
+        </div>
       </div>
-      <p class="msg" id="syncMsg"></p>
+
+      <!-- ===== CAMINO A TOP ===== -->
+      <div id="v-top" hidden>
+        <div class="tophdr">
+          <svg class="rc" width="76" height="76" viewBox="0 0 80 80" aria-hidden="true">
+            <circle cx="40" cy="40" r="33" fill="none" stroke="var(--surface-2)" stroke-width="8"/>
+            <circle id="topRing" cx="40" cy="40" r="33" fill="none" stroke="var(--accent)" stroke-width="8" stroke-linecap="round" stroke-dasharray="207.3" stroke-dashoffset="207.3" transform="rotate(-90 40 40)"/>
+            <text id="topRingPct" x="40" y="46" text-anchor="middle" class="mono" font-size="18" font-weight="700" fill="var(--ink)">0%</text>
+          </svg>
+          <div class="tt">
+            <h2>Camino a Top</h2>
+            <p>Tu ruta a Georgia Tech / Michigan / Purdue. Las <b>compuertas</b> son binarias: sin ellas, el resto no se lee. Toca el estado de cada hito para avanzarlo.</p>
+          </div>
+        </div>
+        <div class="catgrid" id="catgrid"></div>
+      </div>
+
+      <!-- ===== METAS ===== -->
+      <div id="v-metas" hidden>
+        <div class="sect">Objetivo estelar de la semana</div>
+        <div class="card pad"><input id="goal" class="goalinp" type="text" placeholder="Ej: reservar el TOEFL + 2 hojas de IO" autocomplete="off"></div>
+        <div class="sect">Números que te guían <span class="hint">las metas del norte</span></div>
+        <div class="card pad">
+          <div class="metarow"><label for="mToefl">📅 Fecha objetivo TOEFL</label><input id="mToefl" type="date"></div>
+          <div class="metarow"><label for="mToeflScore">🇬🇧 Score TOEFL objetivo</label><input id="mToeflScore" type="number" min="0" max="120" inputmode="numeric"></div>
+          <div class="metarow"><label for="mPct">🎯 Meta de cumplimiento semanal (%)</label><input id="mPct" type="number" min="0" max="100" inputmode="numeric"></div>
+          <div class="metarow"><label for="mSleep">😴 Meta de horas de sueño</label><input id="mSleep" type="number" min="0" max="12" step="0.5" inputmode="decimal"></div>
+          <div class="metarow"><label for="mRacha">🔥 Meta de racha (días seguidos)</label><input id="mRacha" type="number" min="0" inputmode="numeric"></div>
+        </div>
+        <div class="sect">Estado actual</div>
+        <div class="kpis" id="metaKpis"></div>
+      </div>
+
+      <!-- ===== AJUSTES ===== -->
+      <div id="v-ajustes" hidden>
+        <div class="sect">Sincronización en la nube (Supabase)</div>
+        <div class="card pad">
+          <p class="msg">Conecta tu proyecto gratis de Supabase para sincronizar tu progreso entre celular y PC. Tus claves se guardan solo en este dispositivo, nunca en el código. Pasos en el <b>README</b>.</p>
+          <div class="synced-in" style="margin-top:12px"><label for="supUrl">Project URL</label><input id="supUrl" type="url" placeholder="https://xxxx.supabase.co" autocomplete="off"></div>
+          <div class="synced-in"><label for="supKey">Anon public key</label><input id="supKey" type="text" placeholder="eyJhbGci..." autocomplete="off"></div>
+          <div class="stack" style="margin-top:6px">
+            <button class="btn" id="btnSaveSup">Guardar y conectar</button>
+            <div class="synced-in" id="authBox" hidden><label for="supEmail">Tu correo (te llega un enlace mágico)</label><input id="supEmail" type="email" placeholder="juanpradomts@gmail.com"></div>
+            <button class="btn ghost" id="btnLogin" hidden>Enviarme enlace de acceso</button>
+            <button class="btn ghost" id="btnLogout" hidden>Cerrar sesión de sync</button>
+          </div>
+          <p class="msg" id="syncMsg"></p>
+        </div>
+        <div class="sect">Respaldo local</div>
+        <div class="card pad stack">
+          <button class="btn ghost" id="btnExport">Exportar mi progreso (JSON)</button>
+          <button class="btn ghost" id="btnImport">Importar desde archivo</button>
+          <input id="fileImport" type="file" accept="application/json" hidden>
+          <p class="msg">Instálala como app: menú del navegador → <b>Instalar</b> / <b>Agregar a pantalla de inicio</b>.</p>
+        </div>
+        <div class="sect">Apariencia</div>
+        <div class="card pad stack">
+          <button class="btn ghost" id="btnTheme">Cambiar tema (oscuro / claro)</button>
+        </div>
+      </div>
     </div>
-    <p class="lbl">Respaldo local</p>
-    <div class="card pad stack">
-      <button class="btn ghost" id="btnExport">Exportar mi progreso (JSON)</button>
-      <button class="btn ghost" id="btnImport">Importar desde archivo</button>
-      <input id="fileImport" type="file" accept="application/json" hidden>
-      <p class="msg">Aunque no conectes la nube, todo se guarda en este dispositivo. Instálala como app: en el menú del navegador → <b>Instalar</b> / <b>Agregar a pantalla de inicio</b>.</p>
-    </div>
-    <p class="lbl">Apariencia</p>
-    <div class="card pad stack">
-      <button class="btn ghost" id="btnTheme">Cambiar tema (auto / claro / oscuro)</button>
-    </div>
-  </div>
+  </main>
 </div>
 
-<nav>
-  <div class="nav-in">
-    <button class="tab" data-tab="hoy" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Hoy</button>
-    <button class="tab" data-tab="progreso" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg>Progreso</button>
-    <button class="tab" data-tab="metas" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="0.5" fill="currentColor"/></svg>Metas</button>
-    <button class="tab" data-tab="ajustes" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Ajustes</button>
-  </div>
-</nav>
+<nav class="bottomnav"><div class="bn-in" id="bottomnav"></div></nav>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.min.js"></script>
