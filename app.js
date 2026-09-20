@@ -33,6 +33,33 @@ var HITOS_DEF=[
   {id:"ponderado",cat:"Base",titulo:"Ponderado ≥ 18",sub:"La nota, cada ciclo",estado:"curso"}
 ];
 var CATS=["Compuertas","Matemática nivel OR","Research y perfil","Computación","Base"];
+var QUOTES=[
+  ["Somos lo que hacemos repetidamente. La excelencia, entonces, no es un acto, sino un hábito.","Will Durant"],
+  ["La disciplina es el puente entre las metas y los logros.","Jim Rohn"],
+  ["El éxito es la suma de pequeños esfuerzos repetidos día tras día.","Robert Collier"],
+  ["El que tiene un porqué para vivir puede soportar casi cualquier cómo.","Friedrich Nietzsche"],
+  ["No cuentes los días; haz que los días cuenten.","Muhammad Ali"],
+  ["El hombre que mueve montañas comienza apartando pequeñas piedras.","Confucio"],
+  ["No he fracasado. Solo he encontrado 10 000 maneras que no funcionan.","Thomas Edison"],
+  ["Cuida los minutos, que las horas se cuidarán solas.","Lord Chesterfield"],
+  ["Grandes cosas no se hacen por impulso, sino por una serie de pequeñas cosas reunidas.","Vincent van Gogh"],
+  ["Nunca es demasiado tarde para ser lo que podrías haber sido.","George Eliot"],
+  ["La paciencia es amarga, pero su fruto es dulce.","Jean-Jacques Rousseau"],
+  ["El secreto para salir adelante es comenzar.","Mark Twain"],
+  ["La constancia vence lo que la dicha no alcanza.","Simón Bolívar"],
+  ["El único modo de hacer un gran trabajo es amar lo que haces.","Steve Jobs"],
+  ["Primero resuelve el problema; luego escribe el código.","John Johnson"],
+  ["La calidad no es un acto, es un hábito.","Aristóteles"],
+  ["Aprende como si fueras a vivir para siempre.","Mahatma Gandhi"],
+  ["El conocimiento habla, pero la sabiduría escucha.","Jimi Hendrix"],
+  ["Lo que no te mata te hace más fuerte.","Friedrich Nietzsche"],
+  ["Solo sé que no sé nada.","Sócrates"],
+  ["La suerte es lo que ocurre cuando la preparación se encuentra con la oportunidad.","Séneca"],
+  ["Vivir es la cosa más rara del mundo; la mayoría de la gente solo existe.","Oscar Wilde"],
+  ["El futuro depende de lo que hagas hoy.","Mahatma Gandhi"],
+  ["La excelencia no es una habilidad, es una actitud.","Ralph Marston"]
+];
+function dayOfYear(d){var s=new Date(d.getFullYear(),0,0);return Math.floor((d-s)/86400000)}
 
 function ritualFor(d){var g=d.getDay();
   if(g===1||g===3||g===5)return{emoji:"🎲",name:"Tema random",meta:"Tema al azar 10' + explícalo 1' (Feynman)"};
@@ -174,8 +201,9 @@ function renderMetas(){
 function renderHeader(){var n=NAV.filter(function(x){return x.id===state.tab})[0];$("#pageTitle").textContent=n?n.title:"";
   if(state.tab==="hoy"){var d=parseISO(state.activeDate),t=iso(new Date());$("#pageDate").textContent=(state.activeDate===t?"Hoy · ":"")+DOW[d.getDay()]+" "+d.getDate()+" "+MES[d.getMonth()]}
   else{var td=new Date();$("#pageDate").textContent=DOW[td.getDay()]+" "+td.getDate()+" "+MES[td.getMonth()]}}
+function renderQuote(){var q=QUOTES[dayOfYear(new Date())%QUOTES.length];$("#qText").textContent="“"+q[0]+"”";$("#qAuth").textContent="— "+q[1];$("#quoteCard").hidden=false}
 function render(){renderHeader();
-  if(state.tab==="hoy"){ring();renderLists();renderSleep();renderMiniKpis();renderWeek()}
+  if(state.tab==="hoy"){renderQuote();ring();renderLists();renderSleep();renderMiniKpis();renderWeek()}
   else if(state.tab==="progreso"){renderKpis();makeCharts()}
   else if(state.tab==="top"){renderTop()}
   else if(state.tab==="metas"){renderMetas()}}
