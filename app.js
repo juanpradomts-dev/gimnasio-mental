@@ -465,9 +465,36 @@ function initObsidian(){
   else{idbGet("dir").then(function(h){if(h){state.obsHandle=h;setObsUI()}}).catch(function(){})}
 }
 
+/* ---------- Recordatorios (notificaciones) ---------- */
+function remCfg(){try{return JSON.parse(localStorage.getItem("gm_rem")||'{"on":false,"time":"21:00"}')}catch(e){return {on:false,time:"21:00"}}}
+function setRemCfg(c){try{localStorage.setItem("gm_rem",JSON.stringify(c))}catch(e){}}
+function remStatus(){var el=$("#remMsg");if(!el)return;if(!("Notification"in window)){el.textContent="Este navegador no soporta notificaciones.";el.className="msg err";return}
+  var p=Notification.permission,c=remCfg();
+  if(!c.on){el.textContent="Recordatorio desactivado.";el.className="msg";return}
+  if(p==="granted"){el.textContent="✓ Activado: te avisaré a las "+(c.time||"21:00")+" (con la app instalada/abierta).";el.className="msg ok"}
+  else if(p==="denied"){el.textContent="Permiso de notificaciones bloqueado. Actívalo en el candado 🔒 de la barra del navegador.";el.className="msg err"}
+  else{el.textContent="Activa el permiso de notificaciones cuando el navegador lo pida.";el.className="msg"}}
+function notify(title,body){try{if(!("Notification"in window)||Notification.permission!=="granted")return;
+  var opts={body:body,icon:"icon-192.png",badge:"icon-192.png",tag:"gm-daily"};
+  if(navigator.serviceWorker&&navigator.serviceWorker.ready)navigator.serviceWorker.ready.then(function(r){r.showNotification(title,opts)}).catch(function(){try{new Notification(title,opts)}catch(e){}});
+  else try{new Notification(title,opts)}catch(e){}}catch(e){}}
+var remTimer;
+function scheduleReminder(){if(remTimer){clearTimeout(remTimer);remTimer=null}var c=remCfg();
+  if(!c.on||!("Notification"in window)||Notification.permission!=="granted")return;
+  var now=new Date(),pr=(c.time||"21:00").split(":"),t=new Date();t.setHours(+pr[0]||21,+pr[1]||0,0,0);if(t<=now)t.setDate(t.getDate()+1);
+  remTimer=setTimeout(function(){var s=dayScore(iso(new Date()));var body=s.done>0?("Vas "+Math.round(s.pct*100)+"% hoy. Cierra tu día 💪"):"No olvides registrar tus hábitos de hoy 🎯";notify("Gimnasio Mental",body);scheduleReminder()},t-now)}
+function initReminders(){if(!$("#remOn"))return;var c=remCfg();$("#remOn").checked=!!c.on;$("#remTime").value=c.time||"21:00";remStatus();scheduleReminder();
+  $("#remOn").addEventListener("change",function(){var cc=remCfg();cc.on=$("#remOn").checked;setRemCfg(cc);
+    if(cc.on&&("Notification"in window)&&Notification.permission==="default"){Notification.requestPermission().then(function(){remStatus();scheduleReminder()})}
+    else{remStatus();scheduleReminder()}});
+  $("#remTime").addEventListener("change",function(){var cc=remCfg();cc.time=$("#remTime").value||"21:00";setRemCfg(cc);remStatus();scheduleReminder()});
+  $("#remTest").addEventListener("click",function(){if(!("Notification"in window)){remStatus();return}
+    if(Notification.permission==="granted")notify("Gimnasio Mental","Notificación de prueba ✓ Así te recordaré registrar tu día.");
+    else Notification.requestPermission().then(function(p){if(p==="granted")notify("Gimnasio Mental","Notificación de prueba ✓");remStatus()})})}
+
 /* ---------- arranque ---------- */
 (function boot(){
   try{var th=localStorage.getItem("gm_theme");if(th==="light")document.documentElement.setAttribute("data-theme","light")}catch(e){}
-  loadLS();buildNav();switchTab("hoy");initSupabase();initObsidian();
+  loadLS();buildNav();switchTab("hoy");initSupabase();initObsidian();initReminders();
 })();
 })();

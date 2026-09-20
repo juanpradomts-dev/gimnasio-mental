@@ -459,6 +459,13 @@
           </div>
           <p class="msg" id="obsMsg"></p>
         </div>
+        <div class="sect">Recordatorios</div>
+        <div class="card pad">
+          <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:14px"><input type="checkbox" id="remOn" style="width:18px;height:18px;accent-color:var(--accent)"> Recordatorio diario para registrar tu día</label>
+          <div class="metarow" style="margin-top:6px"><label for="remTime">Hora del recordatorio</label><input id="remTime" type="time" value="21:00"></div>
+          <button class="btn ghost" id="remTest" style="margin-top:4px">Probar notificación</button>
+          <p class="msg" id="remMsg">Funciona con la app instalada o abierta. En iPhone requiere instalarla en la pantalla de inicio.</p>
+        </div>
         <div class="sect">Respaldo local</div>
         <div class="card pad stack">
           <button class="btn ghost" id="btnExport">Exportar mi progreso (JSON)</button>
