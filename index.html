@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0f0e1a">
+<meta name="theme-color" content="#0a0a0c">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>Gimnasio Mental</title>
@@ -11,12 +11,12 @@
 <style>
   /* ===== DARK por defecto (profesional) ===== */
   :root{
-    --bg:#0f0e1a; --bg-2:#0b0a14; --surface:#1a1830; --surface-2:#211f3a; --elev:#26234a;
-    --ink:#eae8f8; --muted:#9a95c2; --faint:#6b6690; --border:#2a2748; --border-2:#39355f;
-    --accent:#8b7cff; --accent-ink:#b7acff; --accent-dim:rgba(139,124,255,.15);
-    --good:#4ade80; --warn:#fbbf24; --bad:#f87171; --fire:#fb923c; --btn-ink:#14102e;
-    --shadow:0 1px 2px rgba(0,0,0,.45),0 12px 34px rgba(0,0,0,.4);
-    --grad:linear-gradient(135deg,#8b7cff,#c084fc);
+    --bg:#0a0a0c; --bg-2:#050506; --surface:#141417; --surface-2:#1c1c21; --elev:#242429;
+    --ink:#f3f3f6; --muted:#9a9aa7; --faint:#66666f; --border:#232327; --border-2:#33333a;
+    --accent:#a78bfa; --accent-ink:#cbbcff; --accent-dim:rgba(167,139,250,.14);
+    --good:#4ade80; --warn:#fbbf24; --bad:#f87171; --fire:#fb923c; --btn-ink:#140f22;
+    --shadow:0 1px 2px rgba(0,0,0,.5),0 16px 44px rgba(0,0,0,.55);
+    --grad:linear-gradient(135deg,#a78bfa,#7c5cff);
     color-scheme:dark;
     font-family:'IBM Plex Sans',system-ui,-apple-system,sans-serif;
   }
@@ -148,6 +148,18 @@
   .day .dn{font-size:10px;text-transform:uppercase;color:var(--muted)}
   .day .dnum{font-size:13px;font-weight:600}.day.today .dnum{color:var(--accent-ink)}
 
+  /* cositas top */
+  .kpi{transition:transform .16s ease,border-color .16s}
+  .kpi:hover{transform:translateY(-2px);border-color:var(--border-2)}
+  .kpi.hero .n{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .catcard{transition:border-color .16s}.catcard:hover{border-color:var(--border-2)}
+  .heat{display:grid;grid-auto-flow:column;grid-template-rows:repeat(7,1fr);gap:3px;overflow-x:auto;padding-bottom:2px}
+  .hcell{width:14px;height:14px;border-radius:3px;border:1px solid rgba(255,255,255,.03)}
+  .heatlegend{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);margin-top:12px}
+  .heatlegend i{width:13px;height:13px;border-radius:3px;display:inline-block}
+  .nextchip{display:inline-block;background:var(--accent-dim);color:var(--accent-ink);border:1px solid color-mix(in srgb,var(--accent) 35%,transparent);border-radius:999px;padding:6px 13px;font-size:12.5px;font-weight:600}
+  .nextchip.done{color:var(--good);border-color:color-mix(in srgb,var(--good) 40%,transparent);background:color-mix(in srgb,var(--good) 12%,transparent)}
+  #confetti{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:50}
   .chartcard{padding:16px 17px 10px}
   .chartcard h3{font-size:14px;font-weight:600} .chartcard p{font-size:11.5px;color:var(--muted);margin:2px 0 12px}
   .cwrap{position:relative;height:190px}
@@ -270,6 +282,17 @@
       <div id="v-progreso" hidden>
         <div class="sect">Tus números</div>
         <div class="kpis" id="kpis"></div>
+        <div class="sect">Constancia <span class="hint">últimas 13 semanas</span></div>
+        <div class="card pad">
+          <div class="heat" id="heat"></div>
+          <div class="heatlegend">Menos
+            <i style="background:var(--surface-2)"></i>
+            <i style="background:color-mix(in srgb,var(--accent) 32%,var(--surface-2))"></i>
+            <i style="background:color-mix(in srgb,var(--accent) 55%,var(--surface-2))"></i>
+            <i style="background:color-mix(in srgb,var(--accent) 78%,var(--surface-2))"></i>
+            <i style="background:var(--accent)"></i>
+          Más</div>
+        </div>
         <div class="sect">Gráficas</div>
         <div class="charts-grid">
           <div class="card chartcard span2"><h3>Cumplimiento diario</h3><p>% de hábitos completados por día · últimos 21 días</p><div class="cwrap"><canvas id="chDaily"></canvas></div></div>
@@ -289,6 +312,7 @@
           <div class="tt">
             <h2>Camino a Top</h2>
             <p>Tu ruta a Georgia Tech / Michigan / Purdue. Las <b>compuertas</b> son binarias: sin ellas, el resto no se lee. Toca el estado de cada hito para avanzarlo.</p>
+            <div id="nextHito" style="margin-top:12px"></div>
           </div>
         </div>
         <div class="catgrid" id="catgrid"></div>
@@ -342,6 +366,7 @@
 </div>
 
 <nav class="bottomnav"><div class="bn-in" id="bottomnav"></div></nav>
+<canvas id="confetti"></canvas>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.min.js"></script>

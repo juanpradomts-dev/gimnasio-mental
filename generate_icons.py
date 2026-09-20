@@ -4,9 +4,9 @@ from PIL import Image, ImageDraw
 def make(size, path):
     img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
     d = ImageDraw.Draw(img)
-    # fondo redondeado indigo profundo
+    # fondo redondeado negro profesional
     r = int(size * 0.22)
-    d.rounded_rectangle([0, 0, size - 1, size - 1], radius=r, fill=(20, 18, 42, 255))
+    d.rounded_rectangle([0, 0, size - 1, size - 1], radius=r, fill=(15, 15, 18, 255))
     cx = cy = size / 2
     teal = (109, 94, 214, 255)     # indigo
     cyan = (139, 124, 255, 255)    # violeta acento

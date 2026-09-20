@@ -168,6 +168,23 @@ function makeCharts(){if(typeof Chart==="undefined")return;
   state.charts.sleep=new Chart($("#chSleep"),{type:"line",data:{labels:labels,datasets:[{data:sleepArr,borderColor:fire,backgroundColor:fire+"22",fill:true,tension:.3,spanGaps:true,pointRadius:2,borderWidth:2}]},options:baseOpts(grid,11,"h")});}
 function baseOpts(grid,max,suf){return{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{maxRotation:0,autoSkip:true,maxTicksLimit:7}},y:{beginAtZero:true,max:max,grid:{color:grid},ticks:{callback:function(v){return v+suf}}}}}}
 function destroyCharts(){["daily","habit","sleep"].forEach(function(k){if(state.charts[k]){state.charts[k].destroy();state.charts[k]=null}})}
+function heatColor(pct){if(pct<=0)return"var(--surface-2)";var p=pct>=1?100:(pct>=.75?78:(pct>=.5?55:32));return"color-mix(in srgb, var(--accent) "+p+"%, var(--surface-2))"}
+function renderHeatmap(){var el=$("#heat");if(!el)return;var today=new Date(),off=(today.getDay()+6)%7;
+  var end=new Date(today);end.setDate(today.getDate()+(6-off));var d=new Date(end);d.setDate(end.getDate()-(13*7-1));
+  var html="",t=iso(today);
+  for(var i=0;i<91;i++){var ds=iso(d),fut=d>today,s=dayScore(ds);
+    html+='<div class="hcell" title="'+ds+(fut?"":" · "+Math.round(s.pct*100)+"%")+'" style="background:'+(fut?"transparent":heatColor(s.pct))+(fut?";opacity:.2":"")+(ds===t?";outline:1.5px solid var(--accent-ink);outline-offset:-1px":"")+'"></div>';
+    d.setDate(d.getDate()+1)}
+  el.innerHTML=html}
+function confetti(){try{if(matchMedia("(prefers-reduced-motion: reduce)").matches)return}catch(e){}
+  var cv=$("#confetti");if(!cv)return;var ctx=cv.getContext("2d");var W=cv.width=innerWidth,H=cv.height=innerHeight;
+  var cols=[css("--accent"),css("--good"),css("--warn"),css("--accent-ink")],P=[];
+  for(var i=0;i<110;i++)P.push({x:W/2+(Math.random()-.5)*160,y:H*.3,vx:(Math.random()-.5)*10,vy:Math.random()*-9-3,g:.3,s:4+Math.random()*6,c:cols[i%cols.length],r:Math.random()*6,vr:(Math.random()-.5)*.5});
+  var t0=performance.now();
+  (function frame(t){ctx.clearRect(0,0,W,H);var al=false;
+    P.forEach(function(p){p.vy+=p.g;p.x+=p.vx;p.y+=p.vy;p.r+=p.vr;if(p.y<H+30)al=true;
+      ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.r);ctx.globalAlpha=Math.max(0,1-(t-t0)/1700);ctx.fillStyle=p.c;ctx.fillRect(-p.s/2,-p.s/2,p.s,p.s*.62);ctx.restore()});
+    if(al&&t-t0<1800)requestAnimationFrame(frame);else ctx.clearRect(0,0,W,H)})(t0)}
 
 /* ---------- render CAMINO A TOP ---------- */
 var ESTADOS={pendiente:{next:"curso",cls:"",label:"Pendiente"},curso:{next:"hecho",cls:"curso",label:"En curso"},hecho:{next:"pendiente",cls:"hecho",label:"Hecho"}};
@@ -181,7 +198,9 @@ function renderTop(){
     items.forEach(function(x){var e=ESTADOS[x.estado]||ESTADOS.pendiente;
       html+='<div class="mile"><div class="mt"><div class="mn">'+x.titulo+'</div><div class="ms">'+x.sub+'</div></div><button class="pill '+e.cls+'" data-hito="'+x.id+'">'+e.label+'</button></div>'});
     html+='<div style="padding:12px 15px"><div class="bar"><i style="width:'+cp+'%"></i></div></div></div>'});
-  $("#catgrid").innerHTML=html}
+  $("#catgrid").innerHTML=html;
+  var next=null;for(var ci=0;ci<CATS.length&&!next;ci++){var arr=h.filter(function(x){return x.cat===CATS[ci]&&x.estado!=="hecho"});if(arr.length)next=arr[0]}
+  var nc=$("#nextHito");if(nc)nc.innerHTML=next?'<span class="nextchip">▶ Próximo paso: '+next.titulo+'</span>':'<span class="nextchip done">✓ Todos los hitos logrados — a por el papeleo de admisión</span>'}
 function cycleHito(id){var x=state.metas.hitos.filter(function(y){return y.id===id})[0];if(!x)return;
   x.estado=(ESTADOS[x.estado]||ESTADOS.pendiente).next;saveMetas();pushMetas();renderTop()}
 
@@ -204,7 +223,7 @@ function renderHeader(){var n=NAV.filter(function(x){return x.id===state.tab})[0
 function renderQuote(){var q=QUOTES[dayOfYear(new Date())%QUOTES.length];$("#qText").textContent="“"+q[0]+"”";$("#qAuth").textContent="— "+q[1];$("#quoteCard").hidden=false}
 function render(){renderHeader();
   if(state.tab==="hoy"){renderQuote();ring();renderLists();renderSleep();renderMiniKpis();renderWeek()}
-  else if(state.tab==="progreso"){renderKpis();makeCharts()}
+  else if(state.tab==="progreso"){renderKpis();renderHeatmap();makeCharts()}
   else if(state.tab==="top"){renderTop()}
   else if(state.tab==="metas"){renderMetas()}}
 
@@ -212,7 +231,10 @@ function render(){renderHeader();
 document.addEventListener("click",function(e){
   var nav=e.target.closest("[data-tab]");if(nav){switchTab(nav.getAttribute("data-tab"));return}
   var row=e.target.closest(".row");if(row&&!row.classList.contains("na")){var id=row.getAttribute("data-id");
-    var o=state.days[state.activeDate]||(state.days[state.activeDate]={done:{},dormir:"",despertar:"",nota:""});o.done=o.done||{};o.done[id]=!o.done[id];touch(state.activeDate);render();return}
+    var before=dayScore(state.activeDate).pct;
+    var o=state.days[state.activeDate]||(state.days[state.activeDate]={done:{},dormir:"",despertar:"",nota:""});o.done=o.done||{};o.done[id]=!o.done[id];touch(state.activeDate);
+    if(before<1&&dayScore(state.activeDate).pct>=1&&state.activeDate===iso(new Date()))confetti();
+    render();return}
   var day=e.target.closest(".day");if(day){state.activeDate=day.getAttribute("data-date");render();return}
   var pill=e.target.closest(".pill");if(pill){cycleHito(pill.getAttribute("data-hito"));return}
 });
@@ -230,7 +252,7 @@ $("#fileImport").addEventListener("change",function(e){var f=e.target.files[0];i
 function toggleTheme(){var cur=document.documentElement.getAttribute("data-theme");var next=cur==="light"?"":"light";
   if(next)document.documentElement.setAttribute("data-theme",next);else document.documentElement.removeAttribute("data-theme");
   try{localStorage.setItem("gm_theme",next)}catch(e){}
-  document.querySelector('meta[name=theme-color]').setAttribute("content",next==="light"?"#eef2f4":"#0f0e1a");
+  document.querySelector('meta[name=theme-color]').setAttribute("content",next==="light"?"#eef2f4":"#0a0a0c");
   if(state.tab==="progreso")makeCharts()}
 $("#btnTheme").addEventListener("click",toggleTheme);$("#btnThemeTop").addEventListener("click",toggleTheme);
 
