@@ -17,6 +17,7 @@ var NAV=[
   {id:"hoy",label:"Hoy",title:"Hoy",icon:'<path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>'},
   {id:"progreso",label:"Progreso",title:"Progreso",icon:'<path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/>'},
   {id:"top",label:"Top",title:"Camino a Top",icon:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="0.6" fill="currentColor"/>'},
+  {id:"registros",label:"Notas",title:"Registros y notas",icon:'<path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h6"/>'},
   {id:"metas",label:"Metas",title:"Metas",icon:'<path d="M12 2v4M12 18v4M2 12h4M18 12h4"/><circle cx="12" cy="12" r="4"/>'},
   {id:"ajustes",label:"Ajustes",title:"Ajustes",icon:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>'}
 ];
@@ -79,7 +80,10 @@ function css(v){return getComputedStyle(document.documentElement).getPropertyVal
 /* ---------- almacenamiento local ---------- */
 function loadLS(){try{var d=localStorage.getItem("gm_days");if(d)state.days=JSON.parse(d);
   var m=localStorage.getItem("gm_metas");if(m)state.metas=Object.assign(state.metas,JSON.parse(m));}catch(e){}
-  if(!state.metas.hitos)state.metas.hitos=HITOS_DEF.map(function(h){return Object.assign({},h)});}
+  if(!state.metas.hitos)state.metas.hitos=HITOS_DEF.map(function(h){return Object.assign({},h)});
+  if(!state.metas.registros)state.metas.registros={notas:[],toefl:[]};
+  if(!state.metas.registros.notas)state.metas.registros.notas=[];
+  if(!state.metas.registros.toefl)state.metas.registros.toefl=[];}
 function saveDays(){try{localStorage.setItem("gm_days",JSON.stringify(state.days))}catch(e){}}
 function saveMetas(){try{localStorage.setItem("gm_metas",JSON.stringify(state.metas))}catch(e){}}
 
@@ -216,15 +220,39 @@ function renderMetas(){
   out+=kpi(Math.round(topReadiness()*100)+"%","Camino a Top","hitos logrados");
   $("#metaKpis").innerHTML=out}
 
+/* ---------- render REGISTROS ---------- */
+function esc(s){return (s||"").replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+function renderNota(){var el=$("#notaDia");if(el)el.value=dayObj(state.activeDate).nota||""}
+function renderRegistros(){var R=state.metas.registros;
+  var ns=R.notas.slice().sort(function(a,b){return a.fecha<b.fecha?-1:1});
+  var avg=ns.length?ns.reduce(function(s,x){return s+(+x.nota)},0)/ns.length:null,last=ns.length?ns[ns.length-1]:null;
+  $("#rnStats").innerHTML=kpi(avg!=null?avg.toFixed(1):"—","Promedio /20",avg!=null?(avg>=18?"✓ sobre 18":"meta 18"):"sin notas","hero accent")+kpi(ns.length,"Notas registradas",last?("última: "+(+last.nota).toFixed(1)+" · "+esc(last.curso)):"");
+  $("#rnList").innerHTML=R.notas.length?R.notas.slice().sort(function(a,b){return a.fecha<b.fecha?1:-1}).map(function(x){var col=+x.nota>=18?"var(--good)":(+x.nota>=14?"var(--ink)":"var(--fire)");return '<div class="regrow"><div class="rg-main"><div>'+esc(x.curso)+' <span class="rg-sub">· '+esc(x.tipo)+'</span></div><div class="rg-sub">'+x.fecha+'</div></div><span class="rg-val" style="color:'+col+'">'+(+x.nota).toFixed(1)+'</span><button class="rg-del" data-del-nota="'+x.id+'" title="Eliminar">✕</button></div>'}).join(""):'<div class="empty">Aún no registras notas. Agrega tus parciales, prácticas y simulacros para ver tu promedio real rumbo a 18.</div>';
+  var ts=R.toefl.slice().sort(function(a,b){return a.fecha<b.fecha?-1:1});
+  var tgt=state.metas.toeflScore||105,tlast=ts.length?ts[ts.length-1]:null,tbest=ts.length?Math.max.apply(null,ts.map(function(x){return +x.score})):null;
+  $("#rtTarget").textContent=tgt;
+  $("#rtStats").innerHTML=kpi(tlast?(+tlast.score):"—","Último score",tlast?(+tlast.score>=tgt?"✓ meta "+tgt:"faltan "+(tgt-(+tlast.score))+" pts"):"sin registros","hero accent")+kpi(tbest!=null?tbest:"—","Mejor score","objetivo "+tgt);
+  $("#rtList").innerHTML=R.toefl.length?R.toefl.slice().sort(function(a,b){return a.fecha<b.fecha?1:-1}).map(function(x){var col=+x.score>=tgt?"var(--good)":"var(--ink)";return '<div class="regrow"><div class="rg-main"><div>Práctica TOEFL</div><div class="rg-sub">'+x.fecha+'</div></div><span class="rg-val" style="color:'+col+'">'+(+x.score)+'</span><button class="rg-del" data-del-toefl="'+x.id+'" title="Eliminar">✕</button></div>'}).join(""):'<div class="empty">Registra tus simulacros de TOEFL para ver tu avance hacia '+tgt+'.</div>';
+  if(!$("#rnFecha").value)$("#rnFecha").value=iso(new Date());if(!$("#rtFecha").value)$("#rtFecha").value=iso(new Date());
+  makeRegCharts(ns,ts,tgt)}
+function makeRegCharts(ns,ts,tgt){if(typeof Chart==="undefined")return;
+  var grid=css("--border"),accent=css("--accent"),muted=css("--muted"),good=css("--good");
+  Chart.defaults.color=muted;Chart.defaults.font={family:"'IBM Plex Sans',sans-serif"};
+  if(state.charts.notas){state.charts.notas.destroy();state.charts.notas=null}
+  if(state.charts.toefl){state.charts.toefl.destroy();state.charts.toefl=null}
+  state.charts.notas=new Chart($("#chNotas"),{type:"line",data:{labels:ns.map(function(x){return x.fecha.slice(5)}),datasets:[{data:ns.map(function(x){return +x.nota}),borderColor:accent,backgroundColor:accent+"22",fill:true,tension:.3,pointRadius:3,borderWidth:2},{data:ns.map(function(){return 18}),borderColor:muted,borderDash:[5,5],pointRadius:0,borderWidth:1,fill:false}]},options:baseOpts(grid,20,"")});
+  state.charts.toefl=new Chart($("#chToefl"),{type:"line",data:{labels:ts.map(function(x){return x.fecha.slice(5)}),datasets:[{data:ts.map(function(x){return +x.score}),borderColor:good,backgroundColor:good+"22",fill:true,tension:.3,pointRadius:3,borderWidth:2},{data:ts.map(function(){return tgt}),borderColor:muted,borderDash:[5,5],pointRadius:0,borderWidth:1,fill:false}]},options:baseOpts(grid,120,"")})}
+
 /* ---------- header + orquestador ---------- */
 function renderHeader(){var n=NAV.filter(function(x){return x.id===state.tab})[0];$("#pageTitle").textContent=n?n.title:"";
   if(state.tab==="hoy"){var d=parseISO(state.activeDate),t=iso(new Date());$("#pageDate").textContent=(state.activeDate===t?"Hoy · ":"")+DOW[d.getDay()]+" "+d.getDate()+" "+MES[d.getMonth()]}
   else{var td=new Date();$("#pageDate").textContent=DOW[td.getDay()]+" "+td.getDate()+" "+MES[td.getMonth()]}}
 function renderQuote(){var q=QUOTES[dayOfYear(new Date())%QUOTES.length];$("#qText").textContent="“"+q[0]+"”";$("#qAuth").textContent="— "+q[1];$("#quoteCard").hidden=false}
 function render(){renderHeader();
-  if(state.tab==="hoy"){renderQuote();ring();renderLists();renderSleep();renderMiniKpis();renderWeek()}
+  if(state.tab==="hoy"){renderQuote();ring();renderLists();renderSleep();renderNota();renderMiniKpis();renderWeek()}
   else if(state.tab==="progreso"){renderKpis();renderHeatmap();makeCharts()}
   else if(state.tab==="top"){renderTop()}
+  else if(state.tab==="registros"){renderRegistros()}
   else if(state.tab==="metas"){renderMetas()}}
 
 /* ---------- eventos ---------- */
@@ -237,6 +265,8 @@ document.addEventListener("click",function(e){
     render();return}
   var day=e.target.closest(".day");if(day){state.activeDate=day.getAttribute("data-date");render();return}
   var pill=e.target.closest(".pill");if(pill){cycleHito(pill.getAttribute("data-hito"));return}
+  var dn=e.target.closest("[data-del-nota]");if(dn){var idn=dn.getAttribute("data-del-nota");state.metas.registros.notas=state.metas.registros.notas.filter(function(x){return x.id!==idn});saveMetas();pushMetas();scheduleObsidian();renderRegistros();return}
+  var dt=e.target.closest("[data-del-toefl]");if(dt){var idt=dt.getAttribute("data-del-toefl");state.metas.registros.toefl=state.metas.registros.toefl.filter(function(x){return x.id!==idt});saveMetas();pushMetas();scheduleObsidian();renderRegistros();return}
 });
 $("#dormir").addEventListener("change",sleepChange);$("#despertar").addEventListener("change",sleepChange);
 function sleepChange(){var o=state.days[state.activeDate]||(state.days[state.activeDate]={done:{},dormir:"",despertar:"",nota:""});o.dormir=$("#dormir").value;o.despertar=$("#despertar").value;touch(state.activeDate);renderSleep();ring();renderMiniKpis()}
@@ -244,6 +274,16 @@ var gT;$("#goal").addEventListener("input",function(){state.metas.objetivoSemana
 ["mToefl","mToeflScore","mPct","mSleep","mRacha"].forEach(function(id){$("#"+id).addEventListener("change",function(){
   state.metas.toeflFecha=$("#mToefl").value;state.metas.toeflScore=+$("#mToeflScore").value||105;state.metas.metaPct=+$("#mPct").value||80;state.metas.metaSleep=+$("#mSleep").value||7.5;state.metas.metaRacha=+$("#mRacha").value||14;
   saveMetas();pushMetas();scheduleObsidian();renderMetas()})});
+var notaT;$("#notaDia").addEventListener("input",function(){var o=state.days[state.activeDate]||(state.days[state.activeDate]={done:{},dormir:"",despertar:"",nota:""});o.nota=$("#notaDia").value;clearTimeout(notaT);notaT=setTimeout(function(){touch(state.activeDate)},700)});
+$("#rnAdd").addEventListener("click",function(){var curso=$("#rnCurso").value.trim(),tipo=$("#rnTipo").value,nota=parseFloat($("#rnNota").value),fecha=$("#rnFecha").value||iso(new Date());
+  if(!curso){obsAlert("Escribe el curso.");return}if(isNaN(nota)||nota<0||nota>20){obsAlert("La nota debe ir de 0 a 20.");return}
+  state.metas.registros.notas.push({id:"n"+Date.now(),curso:curso,tipo:tipo,nota:nota,fecha:fecha});saveMetas();pushMetas();scheduleObsidian();
+  $("#rnCurso").value="";$("#rnNota").value="";renderRegistros()});
+$("#rtAdd").addEventListener("click",function(){var score=parseInt($("#rtScore").value,10),fecha=$("#rtFecha").value||iso(new Date());
+  if(isNaN(score)||score<0||score>120){obsAlert("El score debe ir de 0 a 120.");return}
+  state.metas.registros.toefl.push({id:"t"+Date.now(),score:score,fecha:fecha});saveMetas();pushMetas();scheduleObsidian();
+  $("#rtScore").value="";renderRegistros()});
+function obsAlert(m){try{alert(m)}catch(e){}}
 
 /* ---------- respaldo / tema ---------- */
 $("#btnExport").addEventListener("click",function(){var blob=new Blob([JSON.stringify({days:state.days,metas:state.metas},null,2)],{type:"application/json"});var a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="gimnasio-mental-"+iso(new Date())+".json";a.click();setTimeout(function(){URL.revokeObjectURL(a.href)},1000)});
@@ -303,10 +343,23 @@ function genMarkdown(){var now=new Date(),f=function(v){return Math.round(v*100)
   md+="## 🚀 Camino a Top\n";
   CATS.forEach(function(cat){var it=(state.metas.hitos||[]).filter(function(x){return x.cat===cat});if(!it.length)return;md+="\n**"+cat+"**\n";
     it.forEach(function(x){var b=x.estado==="hecho"?"[x]":(x.estado==="curso"?"[/]":"[ ]");md+="- "+b+" "+x.titulo+" — _"+estadoTxt(x.estado)+"_\n"})});
-  md+="\n## 🗓️ Registro (últimos 30 días)\n\n| Fecha | % día | Hábitos cumplidos | Sueño |\n|---|---|---|---|\n";
-  var d=new Date(now);for(var i=0;i<30;i++){var ds=iso(d),o=state.days[ds];
-    if(o&&o.done&&Object.keys(o.done).some(function(k){return o.done[k]})){var s=dayScore(ds),done=Object.keys(o.done).filter(function(k){return o.done[k]}).join(", "),sh=sleepHours(ds);
-      md+="| "+ds+" | "+Math.round(s.pct*100)+"% | "+done+" | "+(sh!=null?sh.toFixed(1)+"h":"—")+" |\n"}d.setDate(d.getDate()-1)}
+  var R=state.metas.registros||{notas:[],toefl:[]};
+  md+="\n## 🎓 Notas académicas (rumbo a ≥18)\n";
+  if(R.notas.length){var avg=R.notas.reduce(function(s,x){return s+(+x.nota)},0)/R.notas.length;
+    md+="- **Promedio:** "+avg.toFixed(2)+"/20 · **registros:** "+R.notas.length+"\n\n| Fecha | Curso | Tipo | Nota |\n|---|---|---|---|\n";
+    R.notas.slice().sort(function(a,b){return a.fecha<b.fecha?1:-1}).forEach(function(x){md+="| "+x.fecha+" | "+x.curso+" | "+x.tipo+" | "+(+x.nota).toFixed(1)+" |\n"})}
+  else md+="_Sin notas registradas todavía._\n";
+  md+="\n## 🇬🇧 TOEFL — práctica (objetivo "+(state.metas.toeflScore||105)+")\n";
+  if(R.toefl.length){var tb=Math.max.apply(null,R.toefl.map(function(x){return +x.score})),tsrt=R.toefl.slice().sort(function(a,b){return a.fecha<b.fecha?-1:1}),lastT=tsrt[tsrt.length-1];
+    md+="- **Último:** "+(+lastT.score)+" · **Mejor:** "+tb+"\n\n| Fecha | Score |\n|---|---|\n";
+    R.toefl.slice().sort(function(a,b){return a.fecha<b.fecha?1:-1}).forEach(function(x){md+="| "+x.fecha+" | "+(+x.score)+" |\n"})}
+  else md+="_Sin registros de práctica todavía._\n";
+  md+="\n## 🔥 Rachas por hábito\n";
+  HABITS.forEach(function(h){md+="- "+h.name+": "+streak(h.id)+" días\n"});
+  md+="\n## 🗓️ Registro diario (últimos 60 días)\n\n| Fecha | % día | Hábitos cumplidos | Sueño | Nota |\n|---|---|---|---|---|\n";
+  var d=new Date(now);for(var i=0;i<60;i++){var ds=iso(d),o=state.days[ds];
+    if(o&&((o.done&&Object.keys(o.done).some(function(k){return o.done[k]}))||o.nota)){var s=dayScore(ds),done=o.done?Object.keys(o.done).filter(function(k){return o.done[k]}).join(", "):"",sh=sleepHours(ds);
+      md+="| "+ds+" | "+Math.round(s.pct*100)+"% | "+done+" | "+(sh!=null?sh.toFixed(1)+"h":"—")+" | "+((o.nota||"").replace(/\n/g," ").replace(/\|/g,"/"))+" |\n"}d.setDate(d.getDate()-1)}
   md+="\n> Origen: app **Gimnasio Mental** (https://juanpradomts-dev.github.io/gimnasio-mental/).\n";
   return md}
 function writeObsidian(manual){if(!state.obsHandle)return Promise.resolve();
