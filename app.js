@@ -94,6 +94,12 @@ function loadLS(){try{var d=localStorage.getItem("gm_days");if(d)state.days=JSON
   if(!state.metas.habitCfg)state.metas.habitCfg={disabled:{},custom:[]};
   if(!state.metas.habitCfg.disabled)state.metas.habitCfg.disabled={};
   if(!state.metas.habitCfg.custom)state.metas.habitCfg.custom=[];
+  if(!state.metas.proyectos)state.metas.proyectos=[
+    {id:"p1",nombre:"EcoStep — baldosa piezoeléctrica",estado:"activo",siguiente:""},
+    {id:"p2",nombre:"SIGIP — sistema PHP/MySQL",estado:"activo",siguiente:""},
+    {id:"p3",nombre:"RSL de IA y desempeño (papers Scopus)",estado:"activo",siguiente:""},
+    {id:"p4",nombre:"Negocio — SIRE / facturación",estado:"pausado",siguiente:""}
+  ];
   rebuildHabits();}
 function saveDays(){try{localStorage.setItem("gm_days",JSON.stringify(state.days))}catch(e){}}
 function saveMetas(){try{localStorage.setItem("gm_metas",JSON.stringify(state.metas))}catch(e){}}
@@ -269,6 +275,39 @@ function renderHabitManager(){var cfg=state.metas.habitCfg,html="";
   cfg.custom.forEach(function(c){html+='<div class="hmrow"><span style="font-size:18px">'+(c.emoji||"⭐")+'</span><div class="hm-main">'+esc(c.name)+' <span class="hm-sub">· '+grpName(c.grupo)+' · propio</span></div><button class="hm-del" data-delhabit="'+c.id+'" title="Eliminar">✕</button></div>'});
   var el=$("#habitMgr");if(el)el.innerHTML=html||'<div class="empty">Sin hábitos.</div>'}
 
+/* ---------- Análisis + Logros + Proyectos ---------- */
+function rateWeek(off){var base=new Date();base.setDate(base.getDate()-off*7);var mon=new Date(base);mon.setDate(base.getDate()-((base.getDay()+6)%7));var td=0,tt=0,today=new Date();
+  for(var i=0;i<7;i++){var dd=new Date(mon);dd.setDate(mon.getDate()+i);if(dd>today)break;var s=dayScore(iso(dd));td+=s.done;tt+=s.tot}return tt?td/tt:0}
+function renderInsights(){var ins=[],w0=rateWeek(0),w1=rateWeek(1);
+  if(w1>0){var diff=Math.round((w0-w1)*100);ins.push([diff>=0?"📈":"📉","Tu cumplimiento va "+(diff>=0?"+":"")+diff+" pts vs la semana pasada ("+Math.round(w0*100)+"% vs "+Math.round(w1*100)+"%)."])}
+  var worst=null;HABITS.forEach(function(h){var c=0,t=0,dd=new Date();for(var i=0;i<30;i++){var ds=iso(dd);if(applies(h.id,dd)){t++;if(doneOn(ds,h.id))c++}dd.setDate(dd.getDate()-1)}var r=t?c/t:1;if(t>=3&&(worst===null||r<worst.r))worst={name:h.name,r:r}});
+  if(worst&&worst.r<0.6)ins.push(["🎯","Tu hábito más flojo (30d): "+worst.name+" ("+Math.round(worst.r*100)+"%). Ahí está tu mayor palanca."]);
+  var as=avgSleep(7);if(as!=null)ins.push([as>=(state.metas.metaSleep||7.5)?"😴":"⚠️","Duermes "+as.toFixed(1)+"h en promedio (meta "+(state.metas.metaSleep||7.5)+"h)."]);
+  var td=toeflDays();if(td!=null&&td>=0&&!state.metas.registros.toefl.length)ins.push(["🇬🇧","Faltan "+td+" días para el TOEFL y aún no registras práctica. Agenda un simulacro."]);
+  var ns=state.metas.registros.notas;if(ns.length){var avg=ns.reduce(function(s,x){return s+(+x.nota)},0)/ns.length;ins.push([avg>=18?"🎓":"📚","Tu promedio académico es "+avg.toFixed(1)+"/20 (meta 18)."])}
+  if(!ins.length)ins.push(["👋","Registra unos días y aquí verás el análisis de tus tendencias."]);
+  $("#insights").innerHTML=ins.map(function(x){return '<div class="ins"><span class="ico">'+x[0]+'</span><span>'+x[1]+'</span></div>'}).join("")}
+function perfectDays(){var n=0;Object.keys(state.days).forEach(function(k){var s=dayScore(k);if(s.tot>0&&s.pct>=1)n++});return n}
+function renderBadges(){var best=bestGlobalStreak(),tot=activeDays(),perf=perfectDays(),R=state.metas.registros;
+  var anyNota18=R.notas.some(function(x){return +x.nota>=18}),toeflAny=R.toefl.length>0;
+  var compuerta=(state.metas.hitos||[]).some(function(x){return x.cat==="Compuertas"&&x.estado==="hecho"}),top=topReadiness();
+  var B=[
+    {ic:"🔥",t:"Racha de 7",d:"7 días seguidos",on:best>=7},
+    {ic:"🔥",t:"Racha de 30",d:"30 días seguidos",on:best>=30},
+    {ic:"💯",t:"Día perfecto",d:"un día al 100%",on:perf>=1},
+    {ic:"📅",t:"Constante",d:"30 días registrados",on:tot>=30},
+    {ic:"🏛️",t:"Centenario",d:"100 días registrados",on:tot>=100},
+    {ic:"🎓",t:"Primer 18",d:"una nota ≥ 18",on:anyNota18},
+    {ic:"🇬🇧",t:"TOEFL en marcha",d:"1er simulacro",on:toeflAny},
+    {ic:"🚪",t:"Compuerta lista",d:"una compuerta hecha",on:compuerta},
+    {ic:"🚀",t:"Medio camino",d:"Camino a Top ≥ 50%",on:top>=0.5}
+  ];
+  $("#badges").innerHTML=B.map(function(b){return '<div class="badge '+(b.on?"on":"lock")+'"><span class="bic">'+(b.on?b.ic:"🔒")+'</span><div><div class="bt">'+b.t+'</div><div class="bd">'+b.d+'</div></div></div>'}).join("")}
+var PESTADOS_P={activo:{next:"pausado",cls:"curso",label:"Activo"},pausado:{next:"hecho",cls:"",label:"Pausado"},hecho:{next:"activo",cls:"hecho",label:"Hecho"}};
+function renderProyectos(){var html=(state.metas.proyectos||[]).map(function(p){var e=PESTADOS_P[p.estado]||PESTADOS_P.activo;
+  return '<div class="projrow"><div class="pj-main"><div class="pj-name">'+esc(p.nombre)+'</div><input class="pj-next" data-projnext="'+p.id+'" placeholder="Siguiente acción…" value="'+esc(p.siguiente||"")+'"></div><button class="pill '+e.cls+'" data-proj="'+p.id+'">'+e.label+'</button><button class="hm-del" data-delproj="'+p.id+'" title="Eliminar">✕</button></div>'}).join("");
+  var el=$("#projList");if(el)el.innerHTML=html||'<div class="empty">Sin proyectos.</div>'}
+
 /* ---------- header + orquestador ---------- */
 function renderHeader(){var n=NAV.filter(function(x){return x.id===state.tab})[0];$("#pageTitle").textContent=n?n.title:"";
   if(state.tab==="hoy"){var d=parseISO(state.activeDate),t=iso(new Date());$("#pageDate").textContent=(state.activeDate===t?"Hoy · ":"")+DOW[d.getDay()]+" "+d.getDate()+" "+MES[d.getMonth()]}
@@ -276,10 +315,10 @@ function renderHeader(){var n=NAV.filter(function(x){return x.id===state.tab})[0
 function renderQuote(){var q=QUOTES[dayOfYear(new Date())%QUOTES.length];$("#qText").textContent="“"+q[0]+"”";$("#qAuth").textContent="— "+q[1];$("#quoteCard").hidden=false}
 function render(){renderHeader();
   if(state.tab==="hoy"){renderQuote();ring();renderLists();renderSleep();renderNota();renderMetrics();renderMiniKpis();renderWeek()}
-  else if(state.tab==="progreso"){renderKpis();renderHeatmap();makeCharts()}
+  else if(state.tab==="progreso"){renderKpis();renderHeatmap();makeCharts();renderInsights();renderBadges()}
   else if(state.tab==="top"){renderTop()}
   else if(state.tab==="registros"){renderRegistros()}
-  else if(state.tab==="metas"){renderMetas()}
+  else if(state.tab==="metas"){renderMetas();renderProyectos()}
   else if(state.tab==="ajustes"){renderHabitManager()}}
 
 /* ---------- eventos ---------- */
@@ -291,7 +330,9 @@ document.addEventListener("click",function(e){
     if(before<1&&dayScore(state.activeDate).pct>=1&&state.activeDate===iso(new Date()))confetti();
     render();return}
   var day=e.target.closest(".day");if(day){state.activeDate=day.getAttribute("data-date");render();return}
-  var pill=e.target.closest(".pill");if(pill){cycleHito(pill.getAttribute("data-hito"));return}
+  var pill=e.target.closest(".pill");if(pill&&pill.hasAttribute("data-hito")){cycleHito(pill.getAttribute("data-hito"));return}
+  var pj=e.target.closest("[data-proj]");if(pj){var idp=pj.getAttribute("data-proj"),pr=(state.metas.proyectos||[]).filter(function(x){return x.id===idp})[0];if(pr){pr.estado=(PESTADOS_P[pr.estado]||PESTADOS_P.activo).next;saveMetas();pushMetas();scheduleObsidian();renderProyectos()}return}
+  var dp=e.target.closest("[data-delproj]");if(dp){var idd=dp.getAttribute("data-delproj");state.metas.proyectos=state.metas.proyectos.filter(function(x){return x.id!==idd});saveMetas();pushMetas();scheduleObsidian();renderProyectos();return}
   var dn=e.target.closest("[data-del-nota]");if(dn){var idn=dn.getAttribute("data-del-nota");state.metas.registros.notas=state.metas.registros.notas.filter(function(x){return x.id!==idn});saveMetas();pushMetas();scheduleObsidian();renderRegistros();return}
   var dt=e.target.closest("[data-del-toefl]");if(dt){var idt=dt.getAttribute("data-del-toefl");state.metas.registros.toefl=state.metas.registros.toefl.filter(function(x){return x.id!==idt});saveMetas();pushMetas();scheduleObsidian();renderRegistros();return}
   var db=e.target.closest(".dot-btn");if(db){var m=db.getAttribute("data-metric"),v=+db.getAttribute("data-val");var o=state.days[state.activeDate]||(state.days[state.activeDate]={done:{},dormir:"",despertar:"",nota:""});o[m]=(o[m]===v)?0:v;touch(state.activeDate);renderMetrics();return}
@@ -321,6 +362,9 @@ $("#hbAdd").addEventListener("click",function(){var name=$("#hbName").value.trim
   if(!name){obsAlert("Escribe el nombre del hábito.");return}
   state.metas.habitCfg.custom.push({id:"c"+Date.now(),name:name,emoji:emoji,grupo:grupo,meta:""});
   saveMetas();pushMetas();rebuildHabits();scheduleObsidian();$("#hbName").value="";$("#hbEmoji").value="";renderHabitManager()});
+$("#pjAdd").addEventListener("click",function(){var name=$("#pjName").value.trim();if(!name){obsAlert("Escribe el nombre del proyecto.");return}
+  state.metas.proyectos.push({id:"p"+Date.now(),nombre:name,estado:"activo",siguiente:""});saveMetas();pushMetas();scheduleObsidian();$("#pjName").value="";renderProyectos()});
+var pjT;document.addEventListener("input",function(e){var pn=e.target.closest("[data-projnext]");if(!pn)return;var id=pn.getAttribute("data-projnext"),p=(state.metas.proyectos||[]).filter(function(x){return x.id===id})[0];if(p){p.siguiente=pn.value;saveMetas();clearTimeout(pjT);pjT=setTimeout(function(){pushMetas();scheduleObsidian()},700)}});
 
 /* ---------- respaldo / tema ---------- */
 $("#btnExport").addEventListener("click",function(){var blob=new Blob([JSON.stringify({days:state.days,metas:state.metas},null,2)],{type:"application/json"});var a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="gimnasio-mental-"+iso(new Date())+".json";a.click();setTimeout(function(){URL.revokeObjectURL(a.href)},1000)});
@@ -380,6 +424,9 @@ function genMarkdown(){var now=new Date(),f=function(v){return Math.round(v*100)
   md+="## 🚀 Camino a Top\n";
   CATS.forEach(function(cat){var it=(state.metas.hitos||[]).filter(function(x){return x.cat===cat});if(!it.length)return;md+="\n**"+cat+"**\n";
     it.forEach(function(x){var b=x.estado==="hecho"?"[x]":(x.estado==="curso"?"[/]":"[ ]");md+="- "+b+" "+x.titulo+" — _"+estadoTxt(x.estado)+"_\n"})});
+  md+="\n## 🧩 Proyectos\n";
+  if((state.metas.proyectos||[]).length)(state.metas.proyectos).forEach(function(p){md+="- **"+p.nombre+"** — _"+p.estado+"_"+(p.siguiente?" · siguiente: "+p.siguiente:"")+"\n"});
+  else md+="_Sin proyectos._\n";
   var R=state.metas.registros||{notas:[],toefl:[]};
   md+="\n## 🎓 Notas académicas (rumbo a ≥18)\n";
   if(R.notas.length){var avg=R.notas.reduce(function(s,x){return s+(+x.nota)},0)/R.notas.length;
